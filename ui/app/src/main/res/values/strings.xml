@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Events App UI</string>
+    <string name="recommended_categories">Recommended Categories For You:</string>
+    <string name="all_events">All Events:</string>
+    <string name="organizer_page_hyperlink">⧉ Organizer\'s Page</string>
+</resources>
