@@ -1,37 +1,26 @@
 package eu.ase.acs.eventsappui;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 import eu.ase.acs.eventsappui.adapters.EventAdapter;
 import eu.ase.acs.eventsappui.adapters.VerticalEventAdapter;
-import eu.ase.acs.eventsappui.entities.CategoryEnum;
 import eu.ase.acs.eventsappui.entities.Event;
-import eu.ase.acs.eventsappui.entities.Location;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -48,8 +37,11 @@ public class EventListFragment extends Fragment {
     // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
-    private FloatingActionButton fab_recommended;
+    private TextView tv_all_events;
+    private FloatingActionButton fab_recommended, fab_view_saved;
     private RecyclerView rv_all_events;
+    private boolean viewSaved = false;
+    private MainActivity mainActivity;
 
     public EventListFragment() {
         // Required empty public constructor
@@ -74,6 +66,15 @@ public class EventListFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        if(viewSaved){
+            mainActivity.getSavedEvents();
+            loadEvents(mainActivity.savedEvents);
+        }
+        super.onResume();
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
@@ -92,21 +93,28 @@ public class EventListFragment extends Fragment {
             @Override
             public void onClick(View view) {
                 HomeFragment fragment = new HomeFragment();
-                ((MainActivity)(requireActivity())).setCurrentFragment(fragment, true);
+                mainActivity.setCurrentFragment(fragment, true);
             }
         });
-        MainActivity mainActivity = (MainActivity)requireActivity();
-        List<Event> events = mainActivity.allEvents;
-        VerticalEventAdapter adapter = new VerticalEventAdapter(events, requireContext());
-        adapter.setOnClickListener(new EventAdapter.OnClickListener() {
-            @Override
-            public void onClick(int position, Event event) {
-                Intent intent = new Intent(requireActivity(), EventActivity.class);
-                intent.putExtra(HomeFragment.EVENT_KEY, event);
-                startActivity(intent);
+        fab_view_saved.setOnClickListener((v) -> {
+            if(viewSaved){
+                fab_view_saved.setImageResource(R.drawable.unsaved_icon);
+                viewSaved = false;
+                tv_all_events.setText(R.string.all_events);
+                loadEvents(mainActivity.allEvents);
             }
+            else{
+                fab_view_saved.setImageResource(R.drawable.saved_icon);
+                viewSaved = true;
+                tv_all_events.setText(R.string.saved_events);
+                mainActivity.getSavedEvents();
+                loadEvents(mainActivity.savedEvents);
+            }
+
         });
-        rv_all_events.setAdapter(adapter);
+        mainActivity = (MainActivity)requireActivity();
+        loadEvents(mainActivity.allEvents);
+
         rv_all_events.setLayoutManager(new GridLayoutManager(requireContext(), 2));
         RecyclerView.ItemDecoration divider = new RecyclerView.ItemDecoration() {
             @Override
@@ -119,9 +127,20 @@ public class EventListFragment extends Fragment {
         return view;
     }
 
+    private void loadEvents(List<Event> events){
+        VerticalEventAdapter adapter = new VerticalEventAdapter(events, requireContext());
+        adapter.setOnClickListener((position, event) -> {
+            Intent intent = new Intent(requireActivity(), EventActivity.class);
+            intent.putExtra(HomeFragment.EVENT_KEY, event);
+            startActivity(intent);
+        });
+        rv_all_events.setAdapter(adapter);
+    }
     private void initComponents(View view){
         fab_recommended = view.findViewById(R.id.fab_recommended);
         rv_all_events = view.findViewById(R.id.rv_all_events);
+        fab_view_saved = view.findViewById(R.id.fab_view_saved);
+        tv_all_events = view.findViewById(R.id.tv_all_events);
     }
 
 

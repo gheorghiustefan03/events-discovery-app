@@ -42,10 +42,24 @@
         android:textColor="@color/white"
         android:textSize="34sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/floatingActionButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/events_slider" />
 
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_save"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="10dp"
+        android:clickable="true"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/events_slider"
+        app:srcCompat="@drawable/unsaved_icon"
+        app:tint="@color/black"
+        app:backgroundTint="@android:color/transparent"
+        app:elevation="0dp"
+        app:rippleColor="@android:color/transparent" />
 
     <ScrollView
         android:id="@+id/sv_details_description"

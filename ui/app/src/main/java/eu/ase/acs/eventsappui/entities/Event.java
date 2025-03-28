@@ -3,21 +3,22 @@ package eu.ase.acs.eventsappui.entities;
 import androidx.annotation.NonNull;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class Event implements Serializable {
+    private int id;
     private String name;
     private String description;
     private Location location;
-    private List<CategoryEnum> categories;
+    private List<Category> categories;
     private List<String> imageUrls;
     private String link;
     private LocalDateTime startDate, endDate;
 
+    public int getId(){return id;}
+    public void setId(int id){this.id = id;}
     public LocalDateTime getStartDate() {
         return startDate;
     }
@@ -42,7 +43,8 @@ public class Event implements Serializable {
         this.link = link;
     }
 
-    public Event(String name, String description, Location location, List<CategoryEnum> categories, List<String> imageUrls, String link, LocalDateTime startDate, LocalDateTime endDate) {
+    public Event(int id, String name, String description, Location location, List<Category> categories, List<String> imageUrls, String link, LocalDateTime startDate, LocalDateTime endDate) {
+        this.setId(id);
         this.setName(name);
         this.setDescription(description);
         this.setLocation(location);
@@ -78,14 +80,14 @@ public class Event implements Serializable {
     }
 
     public void setLocation(Location location) {
-        this.location = new Location(location.getName(), location.getLatitude(), location.getLongitude());
+        this.location = new Location(location.getId(), location.getName(), location.getLatitude(), location.getLongitude());
     }
 
-    public List<CategoryEnum> getCategories() {
+    public List<Category> getCategories() {
         return new ArrayList<>(categories);
     }
 
-    public void setCategories(List<CategoryEnum> categories) {
+    public void setCategories(List<Category> categories) {
         this.categories = new ArrayList<>(categories);
     }
 
@@ -102,4 +104,5 @@ public class Event implements Serializable {
     public String toString() {
         return getName();
     }
+
 }

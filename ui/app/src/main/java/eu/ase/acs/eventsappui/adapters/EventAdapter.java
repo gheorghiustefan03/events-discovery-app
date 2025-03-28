@@ -1,5 +1,6 @@
 package eu.ase.acs.eventsappui.adapters;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,7 +19,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 
 import eu.ase.acs.eventsappui.R;
 import eu.ase.acs.eventsappui.entities.Event;
@@ -44,13 +47,16 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         Event event = eventList.get(position);
         holder.setName(event.getName());
         holder.setLocation(event.getLocation().getName());
+        LocalDateTime startDate = event.getStartDate();
+        @SuppressLint("NewApi") String dateToDisplay = String.format(String.format(Locale.ENGLISH, "%02d.%02d.%02d",
+                startDate.getMonth().getValue(),
+                startDate.getDayOfMonth(),
+                startDate.getYear() - 2000));
+        holder.setStartDate(dateToDisplay);
         Glide.with(context).load(event.getImageUrls().get(0)).override(80, 143).centerCrop().into(holder.ivHeader);
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if(onClickListener != null){
-                    onClickListener.onClick(holder.getAdapterPosition(), event);
-                }
+        holder.itemView.setOnClickListener(view -> {
+            if(onClickListener != null){
+                onClickListener.onClick(holder.getAdapterPosition(), event);
             }
         });
     }
@@ -80,11 +86,13 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         protected TextView tvName;
         protected TextView tvLocation;
         protected ImageView ivHeader;
+        protected TextView tvStartDate;
         public EventViewHolder(@NonNull View itemView) {
             super(itemView);
             tvName = itemView.findViewById(R.id.tvName);
             tvLocation = itemView.findViewById(R.id.tvLocation);
             ivHeader = itemView.findViewById(R.id.ivHeader);
+            tvStartDate = itemView.findViewById(R.id.tvStartDate);
         }
         public void setName(String name){
             tvName.setText(name);
@@ -92,5 +100,6 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         public void setLocation(String location){
             tvLocation.setText("@" + location);
         }
+        public void setStartDate(String startDate){tvStartDate.setText(startDate);}
     }
 }

@@ -6,15 +6,19 @@ import java.io.Serializable;
 import java.util.Objects;
 
 public class Location implements Serializable {
+    private int id;
     private String name;
     private double latitude;
     private double longitude;
 
-    public Location(String name, double latitude, double longitude) {
+    public Location(int id, String name, double latitude, double longitude) {
+        this.id = id;
         this.name = name;
         this.latitude = latitude;
         this.longitude = longitude;
     }
+    public int getId(){return id;}
+    public void setId(int id){this.id = id;}
 
     public String getName() {
         return name;
@@ -42,7 +46,7 @@ public class Location implements Serializable {
     @NonNull
     @Override
     public Location clone() throws CloneNotSupportedException {
-        return new Location(this.name, this.latitude, this.longitude);
+        return new Location(this.id, this.name, this.latitude, this.longitude);
     }
 
     @Override

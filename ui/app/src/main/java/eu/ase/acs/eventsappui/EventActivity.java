@@ -1,9 +1,12 @@
 package eu.ase.acs.eventsappui;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 
@@ -27,6 +30,9 @@ public class EventActivity extends AppCompatActivity {
     private Event event;
     private SliderView eventsSlider;
     private TextView tvName, tvDescription, tvLocation, tvLink, tvEndTime, tvStartTime;
+    private int savedArrayIndex = -1;
+    private int savedArraySize;
+    FloatingActionButton fabSave;
     FloatingActionButton fabBack;
     @SuppressLint("NewApi")
     @Override
@@ -43,6 +49,16 @@ public class EventActivity extends AppCompatActivity {
         initComponents();
 
         event = (Event) (getIntent().getSerializableExtra(HomeFragment.EVENT_KEY));
+
+        SharedPreferences sharedPreferences = getSharedPreferences("preferences", Context.MODE_PRIVATE);
+        savedArraySize = sharedPreferences.getInt("saved_events_size", 0);
+        for(int i = 0; i < savedArraySize; i++){
+            if(sharedPreferences.getInt("saved_events_"+i, -1) == event.getId()){
+                savedArrayIndex = i;
+                fabSave.setImageResource(R.drawable.saved_icon);
+                break;
+            }
+        }
 
         List<String> imgUrls = event.getImageUrls();
         SliderAdapter adapter = new SliderAdapter(this, imgUrls);
@@ -78,6 +94,26 @@ public class EventActivity extends AppCompatActivity {
         fabBack.setOnClickListener(view -> {
             finish();
         });
+        fabSave.setOnClickListener(view -> {
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            if(savedArrayIndex == -1){
+                editor.putInt("saved_events_size", savedArraySize + 1);
+                editor.putInt("saved_events_"+(savedArraySize), event.getId());
+                savedArraySize += 1;
+                savedArrayIndex = savedArraySize - 1;
+                fabSave.setImageResource(R.drawable.saved_icon);
+            }else{
+                for(int i = savedArrayIndex; i < savedArraySize-1; i++){
+                    editor.putInt("saved_events_"+i, sharedPreferences.getInt("saved_events_"+(i+1), 0));
+                }
+                editor.remove("saved_events_"+(savedArraySize-1));
+                editor.putInt("saved_events_size", savedArraySize - 1);
+                savedArrayIndex = -1;
+                savedArraySize -= 1;
+                fabSave.setImageResource(R.drawable.unsaved_icon);
+            }
+            editor.apply();
+        });
     }
 
     private void initComponents(){
@@ -89,5 +125,6 @@ public class EventActivity extends AppCompatActivity {
         tvEndTime = findViewById(R.id.tv_details_end_time);
         tvStartTime = findViewById(R.id.tv_details_start_time);
         fabBack = findViewById(R.id.fab_back);
+        fabSave = findViewById(R.id.fab_save);
     }
 }

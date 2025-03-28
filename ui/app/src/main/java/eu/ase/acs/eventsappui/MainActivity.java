@@ -1,17 +1,14 @@
 package eu.ase.acs.eventsappui;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.view.MenuItem;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
@@ -22,23 +19,18 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.maps.android.SphericalUtil;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
-import eu.ase.acs.eventsappui.entities.CategoryEnum;
+import eu.ase.acs.eventsappui.entities.Category;
 import eu.ase.acs.eventsappui.entities.Event;
 import eu.ase.acs.eventsappui.entities.Location;
 
@@ -46,8 +38,9 @@ public class MainActivity extends AppCompatActivity{
     private static final String LOREM_IPSUM = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sit amet maximus purus, id sodales lorem. Sed velit ipsum, viverra vitae convallis fringilla, accumsan ac leo. Nulla aliquam at nulla sit amet ultricies. In et libero fringilla, gravida mi vel, tempus mauris. Vivamus ultrices, leo quis eleifend placerat, libero turpis mattis orci, vel auctor quam lacus id dui. Donec non ligula enim. Aliquam eget felis purus. Curabitur eget ex nisl. ";
     private BottomNavigationView nv_main;
     public List<Event> allEvents = new ArrayList<>();
+    public List<Event> savedEvents = new ArrayList<>();
     public List<Location> allLocations = new ArrayList<>();
-    List<CategoryEnum> recommendedCategories = new ArrayList<>();
+    List<Category> recommendedCategories = new ArrayList<>();
     public LatLng userLocation = null;
     public long radius;
     private SharedPreferences sharedPreferences;
@@ -79,10 +72,14 @@ public class MainActivity extends AppCompatActivity{
             if (location != null) {
                 userLocation = new LatLng(location.getLatitude(), location.getLongitude());
                 initComponents();
-                SharedPreferences sharedPreferences = getSharedPreferences("preferences", Context.MODE_PRIVATE);
+                sharedPreferences = getSharedPreferences("preferences", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
                 if(!sharedPreferences.contains("radius")){
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
                     editor.putLong("radius", 10000);
+                    editor.apply();
+                }
+                if(!sharedPreferences.contains("saved_events_size")){
+                    editor.putInt("saved_events_size", 0);
                     editor.apply();
                 }
                 radius = sharedPreferences.getLong("radius", 0);
@@ -124,10 +121,13 @@ public class MainActivity extends AppCompatActivity{
             setItemBackground(nv_main, item.getItemId(), R.color.navbar_background);
         }
     }
+
+
     public void scanForEvents(){
         getRecommendedCategories();
         getAllLocations();
         getAllRecommendedEvents();
+        getSavedEvents();
     }
     private void setItemBackground(BottomNavigationView bnv, int itemId, int backgroundId){
         bnv.findViewById(itemId).setBackgroundResource(backgroundId);
@@ -151,20 +151,20 @@ public class MainActivity extends AppCompatActivity{
     public void getAllRecommendedEvents(){
         allEvents.clear();
         for(int i = 0; i < 100; i++){
-            CategoryEnum[] categories = CategoryEnum.values();
+            Category[] categories = Category.values();
             Random random = new Random();
             int nrCategories = 1;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                 nrCategories = random.nextInt(1,5);
             }
-            List<CategoryEnum> chosenCategories = new ArrayList<>(nrCategories);
+            List<Category> chosenCategories = new ArrayList<>(nrCategories);
             for(int j = 0; j < nrCategories; j++){
-                CategoryEnum category = categories[random.nextInt(categories.length)];
+                Category category = categories[random.nextInt(categories.length)];
                 if(!chosenCategories.contains(category))
                     chosenCategories.add(category);
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Event event = new Event("Event " + (i+1), LOREM_IPSUM,
+                Event event = new Event(i,"Event " + (i+1), LOREM_IPSUM,
                         allLocations.get(random.nextInt(allLocations.size())), chosenCategories,
                         List.of("https://picsum.photos/1920/1080", "https://picsum.photos/1920/1080"),
                         "https://www.google.com", LocalDateTime.now(),
@@ -179,7 +179,7 @@ public class MainActivity extends AppCompatActivity{
             double[] randomCoordinates;
 randomCoordinates = generateRandomCoordinate(userLocation.latitude, userLocation.longitude, radius / 1000);
 
-            allLocations.add(new Location("Location " + (i+1), randomCoordinates[0], randomCoordinates[1]));
+            allLocations.add(new Location(i,"Location " + (i+1), randomCoordinates[0], randomCoordinates[1]));
         }
     }
     @Override
@@ -200,16 +200,16 @@ randomCoordinates = generateRandomCoordinate(userLocation.latitude, userLocation
     public void getRecommendedCategories(){
         recommendedCategories.clear();
         recommendedCategories = new ArrayList<>(4);
-        CategoryEnum[] categories = CategoryEnum.values();
+        Category[] categories = Category.values();
         Random random = new Random();
         for(int j = 0; j < 4; j++){
-            CategoryEnum category = categories[random.nextInt(categories.length)];
+            Category category = categories[random.nextInt(categories.length)];
             if(!recommendedCategories.contains(category))
                 recommendedCategories.add(category);
             else j--;
         }
     }
-    public List<Event> getRecommendedEventsForCategory(CategoryEnum category){
+    public List<Event> getRecommendedEventsForCategory(Category category){
         List<Event> result = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             result = allEvents.stream().filter(e -> e.getCategories().contains(category)).toList();
@@ -232,5 +232,16 @@ randomCoordinates = generateRandomCoordinate(userLocation.latitude, userLocation
         double randomLong = centerLong + deltaLong * Math.cos(angle);
 
         return new double[]{randomLat, randomLong};
+    }
+    void getSavedEvents(){
+        savedEvents.clear();
+        int size = sharedPreferences.getInt("saved_events_size", 0);
+        for(int i = 0; i < size; i++){
+            int id = sharedPreferences.getInt("saved_events_"+i, 0);
+                List<Event> event = allEvents.stream().filter(e -> e.getId() == id).collect(Collectors.toList());
+                if(!event.isEmpty()){
+                    savedEvents.add(event.get(0));
+                }
+        }
     }
 }

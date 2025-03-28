@@ -1,23 +1,14 @@
 package eu.ase.acs.eventsappui;
 
-import static eu.ase.acs.eventsappui.HomeFragment.EVENT_KEY;
-
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.graphics.Camera;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
 
-import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,23 +16,16 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
 
-import com.google.android.gms.location.CurrentLocationRequest;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -49,7 +33,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import eu.ase.acs.eventsappui.adapters.MapPinDropdownAdapter;
-import eu.ase.acs.eventsappui.entities.CategoryEnum;
 import eu.ase.acs.eventsappui.entities.Event;
 import eu.ase.acs.eventsappui.entities.Location;
 
@@ -123,7 +106,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         List<Event> eventsAtLocation = mainActivity.allEvents.stream()
                 .filter(e -> e.getLocation().equals(location))
                 .collect(Collectors.toList());
-        eventsAtLocation.add(0, new Event("Select an event:", "dummy event", location, new ArrayList<>(), new ArrayList<>(), "", LocalDateTime.now(), LocalDateTime.now()));
+        eventsAtLocation.add(0, new Event(-1, "Select an event:", "dummy event", location, new ArrayList<>(), new ArrayList<>(), "", LocalDateTime.now(), LocalDateTime.now()));
 
         View dialogView = getLayoutInflater().inflate(R.layout.event_dialog_layout, null);
         Spinner spinner = dialogView.findViewById(R.id.dialogSpinnerEvents);

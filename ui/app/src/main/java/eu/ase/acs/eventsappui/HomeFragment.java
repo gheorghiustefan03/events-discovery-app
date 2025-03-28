@@ -1,10 +1,8 @@
 package eu.ase.acs.eventsappui;
 
-import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.os.Bundle;
 
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.DividerItemDecoration;
@@ -18,15 +16,13 @@ import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import eu.ase.acs.eventsappui.adapters.EventAdapter;
-import eu.ase.acs.eventsappui.entities.CategoryEnum;
+import eu.ase.acs.eventsappui.entities.Category;
 import eu.ase.acs.eventsappui.entities.Event;
-import eu.ase.acs.eventsappui.entities.Location;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -99,7 +95,7 @@ public class HomeFragment extends Fragment {
         List<RecyclerView> rvList = Arrays.asList(rv_categorized_1, rv_categorized_2, rv_categorized_3, rv_categorized_4);
 
         List<List<Event>> categoriesEventsLists = new ArrayList<>();
-        for(CategoryEnum category : mainActivity.recommendedCategories){
+        for(Category category : mainActivity.recommendedCategories){
             List<Event> eventsList = mainActivity.getRecommendedEventsForCategory(category);
             categoriesEventsLists.add(eventsList);
         }

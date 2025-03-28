@@ -5,4 +5,5 @@
     <string name="organizer_page_hyperlink">⧉ Organizer\'s Page</string>
     <string name="radius_slider_text">Events Search Radius (km)</string>
     <string name="location_permission_warning">Location permission is required</string>
+    <string name="saved_events">Saved Events:</string>
 </resources>
