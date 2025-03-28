@@ -1,5 +1,7 @@
 package eu.ase.acs.eventsappui.entities;
 
+import androidx.annotation.NonNull;
+
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -95,5 +97,9 @@ public class Event implements Serializable {
         this.imageUrls = new ArrayList<>(imageUrls);
     }
 
-
+    @NonNull
+    @Override
+    public String toString() {
+        return getName();
+    }
 }

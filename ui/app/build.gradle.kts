@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
 }
@@ -7,6 +9,14 @@ android {
     compileSdk = 35
 
     defaultConfig {
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if(localPropertiesFile.exists()){
+            localProperties.load(localPropertiesFile.inputStream())
+        }
+
+        resValue("string", "MAPS_API_KEY", localProperties.getProperty("MAPS_API_KEY"))
+
         applicationId = "eu.ase.acs.eventsappui"
         minSdk = 24
         targetSdk = 34
@@ -45,4 +55,7 @@ dependencies {
     implementation(libs.glide)
     annotationProcessor(libs.compiler)
     implementation(libs.android.image.slider)
+    implementation(libs.play.services.maps)
+    implementation(libs.gms.play.services.location)
+    implementation(libs.android.maps.utils)
 }

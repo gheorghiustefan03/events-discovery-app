@@ -1,64 +1,166 @@
 package eu.ase.acs.eventsappui;
 
+import static eu.ase.acs.eventsappui.HomeFragment.EVENT_KEY;
+
+import android.annotation.SuppressLint;
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.Camera;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
+import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+
+import com.google.android.gms.location.CurrentLocationRequest;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import eu.ase.acs.eventsappui.adapters.MapPinDropdownAdapter;
+import eu.ase.acs.eventsappui.entities.CategoryEnum;
+import eu.ase.acs.eventsappui.entities.Event;
+import eu.ase.acs.eventsappui.entities.Location;
 
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link MapFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class MapFragment extends Fragment {
-
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+public class MapFragment extends Fragment implements OnMapReadyCallback {
+    GoogleMap gMap;
+    private static CameraPosition position = null;
+    private MainActivity mainActivity;
+    private boolean isSpinnerInitialized;
 
     public MapFragment() {
-        // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment MapFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static MapFragment newInstance(String param1, String param2) {
-        MapFragment fragment = new MapFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
+
+    public static MapFragment newInstance() {
+        return new MapFragment();
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_map, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+    }
+
+    @Override
+    public void onMapReady(@NonNull GoogleMap googleMap) {
+        gMap = googleMap;
+        gMap.clear();
+        gMap.setInfoWindowAdapter(new MapPinDropdownAdapter(requireContext()));
+        mainActivity = (MainActivity)requireActivity();
+        for (Location location : mainActivity.allLocations) {
+            gMap.addMarker(new MarkerOptions().position(
+                    new LatLng(location.getLatitude(), location.getLongitude())
+            ).title(location.getName())).setTag(location);
+        }
+        gMap.setOnMarkerClickListener(marker -> {
+            if(marker.getTag() != null){
+                showEventDialog(marker);
+                return false;
+            }
+            return true;
+        });
+        if(position == null){
+            position = CameraPosition.fromLatLngZoom(mainActivity.userLocation, 15);
+        }
+        gMap.moveCamera(CameraUpdateFactory.newCameraPosition(position));
+        gMap.addCircle(new CircleOptions().center(mainActivity.userLocation).strokeColor(R.color.black).strokeWidth(4).radius(mainActivity.radius));
+        Marker userLocationMarker = gMap.addMarker(new MarkerOptions().position(mainActivity.userLocation).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+        userLocationMarker.setTag(null);
+    }
+
+    @SuppressLint("NewApi")
+    private void showEventDialog(Marker marker) {
+        Location location = (Location)marker.getTag();
+        List<Event> eventsAtLocation = mainActivity.allEvents.stream()
+                .filter(e -> e.getLocation().equals(location))
+                .collect(Collectors.toList());
+        eventsAtLocation.add(0, new Event("Select an event:", "dummy event", location, new ArrayList<>(), new ArrayList<>(), "", LocalDateTime.now(), LocalDateTime.now()));
+
+        View dialogView = getLayoutInflater().inflate(R.layout.event_dialog_layout, null);
+        Spinner spinner = dialogView.findViewById(R.id.dialogSpinnerEvents);
+        ArrayAdapter<Event> adapter = new ArrayAdapter<>(requireActivity(),
+                android.R.layout.simple_spinner_item, eventsAtLocation);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setView(dialogView);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        isSpinnerInitialized = false;
+
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                if(!isSpinnerInitialized){
+                    isSpinnerInitialized = true;
+                    return;
+                }
+                Event event = (Event) parentView.getItemAtPosition(position);
+                Intent intent = new Intent(requireContext(), EventActivity.class);
+                intent.putExtra(HomeFragment.EVENT_KEY, event);
+                startActivity(intent);
+                dialog.dismiss();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parentView) {
+            }
+        });
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        position = gMap.getCameraPosition();
     }
 }

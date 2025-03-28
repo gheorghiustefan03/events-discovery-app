@@ -88,9 +88,10 @@ public class HomeFragment extends Fragment {
         initComponents(view);
 
         List<TextView> tvList = Arrays.asList(tv_category_1, tv_category_2, tv_category_3, tv_category_4);
-        List<CategoryEnum> recommendedCategories = getRecommendedCategories();
+        MainActivity mainActivity = (MainActivity)requireActivity();
+
         for(int i = 0; i < tvList.size(); i++){
-            String category = recommendedCategories.get(i).toString().toLowerCase();
+            String category = mainActivity.recommendedCategories.get(i).toString().toLowerCase();
             String capitalized = category.substring(0, 1).toUpperCase() + category.substring(1);
             tvList.get(i).setText(capitalized);
         }
@@ -98,8 +99,8 @@ public class HomeFragment extends Fragment {
         List<RecyclerView> rvList = Arrays.asList(rv_categorized_1, rv_categorized_2, rv_categorized_3, rv_categorized_4);
 
         List<List<Event>> categoriesEventsLists = new ArrayList<>();
-        for(CategoryEnum category : recommendedCategories){
-            List<Event> eventsList = getRecommendedEventsInCategory(category);
+        for(CategoryEnum category : mainActivity.recommendedCategories){
+            List<Event> eventsList = mainActivity.getRecommendedEventsForCategory(category);
             categoriesEventsLists.add(eventsList);
         }
 
@@ -146,18 +147,5 @@ public class HomeFragment extends Fragment {
         tv_category_4 = view.findViewById(R.id.tv_category_4);
 
         fab_all_events = view.findViewById(R.id.fab_all_events);
-    }
-    private List<CategoryEnum> getRecommendedCategories(){
-        return Arrays.asList(CategoryEnum.ARTS, CategoryEnum.COMEDY, CategoryEnum.EDUCATION, CategoryEnum.MUSIC);
-    }
-    private List<Event> getRecommendedEventsInCategory(CategoryEnum category){
-        List<Event> result = new ArrayList<>();
-        for(int i = 0; i < 4; i++){
-            @SuppressLint("NewApi") Event event = new Event(category.toString() + " event" + i,
-                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sit amet maximus purus, id sodales lorem. Sed velit ipsum, viverra vitae convallis fringilla, accumsan ac leo. Nulla aliquam at nulla sit amet ultricies. In et libero fringilla, gravida mi vel, tempus mauris. Vivamus ultrices, leo quis eleifend placerat, libero turpis mattis orci, vel auctor quam lacus id dui. Donec non ligula enim. Aliquam eget felis purus. Curabitur eget ex nisl. Contrary to popular belief, Lorem Ipsum is not simply random text. It has roots in a piece of classical Latin literature from 45 BC, making it over 2000 years old. Richard McClintock, a Latin professor at Hampden-Sydney College in Virginia, looked up one of the more obscure Latin words, consectetur, from a Lorem Ipsum passage, and going through the cites of the word in classical literature, discovered the undoubtable source. Lorem Ipsum comes from sections 1.10.32 and 1.10.33 of \"de Finibus Bonorum et Malorum\" (The Extremes of Good and Evil) by Cicero, written in 45 BC. This book is a treatise on the theory of ethics, very popular during the Renaissance. The first line of Lorem Ipsum, \"Lorem ipsum dolor sit amet..\", comes from a line in section 1.10.32."
-                    , new Location("location" + i, 44.456315051913876, 26.056915854070496), Arrays.asList(CategoryEnum.COMEDY), Arrays.asList("https://picsum.photos/1920/1080"), "https://www.google.com", LocalDateTime.of(2025, 3, 3, 00, 00), LocalDateTime.now());
-            result.add(event);
-        }
-        return result;
     }
 }

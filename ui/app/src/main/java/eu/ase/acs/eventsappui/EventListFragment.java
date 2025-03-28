@@ -18,12 +18,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import eu.ase.acs.eventsappui.adapters.EventAdapter;
 import eu.ase.acs.eventsappui.adapters.VerticalEventAdapter;
@@ -93,8 +95,8 @@ public class EventListFragment extends Fragment {
                 ((MainActivity)(requireActivity())).setCurrentFragment(fragment, true);
             }
         });
-
-        List<Event> events = getEvents();
+        MainActivity mainActivity = (MainActivity)requireActivity();
+        List<Event> events = mainActivity.allEvents;
         VerticalEventAdapter adapter = new VerticalEventAdapter(events, requireContext());
         adapter.setOnClickListener(new EventAdapter.OnClickListener() {
             @Override
@@ -122,12 +124,6 @@ public class EventListFragment extends Fragment {
         rv_all_events = view.findViewById(R.id.rv_all_events);
     }
 
-    private List<Event> getEvents(){
-        List<Event> events = new ArrayList<>();
-        for(int i = 0; i < 30; i++){
-            @SuppressLint("NewApi") Event event = new Event( "event " + i, "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sit amet maximus purus, id sodales lorem. Sed velit ipsum, viverra vitae convallis fringilla, accumsan ac leo. Nulla aliquam at nulla sit amet ultricies. In et libero fringilla, gravida mi vel, tempus mauris. Vivamus ultrices, leo quis eleifend placerat, libero turpis mattis orci, vel auctor quam lacus id dui. Donec non ligula enim. Aliquam eget felis purus. Curabitur eget ex nisl. ", new Location("location" + i, 44.456315051913876, 26.056915854070496), Arrays.asList(CategoryEnum.COMEDY), Arrays.asList("https://picsum.photos/1920/1080", "https://picsum.photos/1920/1080"), "https://www.google.com", LocalDateTime.of(2025, 3, 3, 00, 00), LocalDateTime.now());
-            events.add(event);
-        }
-        return events;
-    }
+
+
 }
