@@ -24,22 +24,8 @@ import eu.ase.acs.eventsappui.adapters.EventAdapter;
 import eu.ase.acs.eventsappui.entities.Category;
 import eu.ase.acs.eventsappui.entities.Event;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link HomeFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class HomeFragment extends Fragment {
-
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
     public static final String EVENT_KEY = "eventkey";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
     private RecyclerView rv_categorized_1, rv_categorized_2, rv_categorized_3, rv_categorized_4;
     private TextView tv_category_1, tv_category_2, tv_category_3, tv_category_4;
     private FloatingActionButton fab_all_events;
@@ -48,31 +34,9 @@ public class HomeFragment extends Fragment {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment HomeFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static HomeFragment newInstance(String param1, String param2) {
-        HomeFragment fragment = new HomeFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
@@ -84,9 +48,9 @@ public class HomeFragment extends Fragment {
         initComponents(view);
 
         List<TextView> tvList = Arrays.asList(tv_category_1, tv_category_2, tv_category_3, tv_category_4);
-        MainActivity mainActivity = (MainActivity)requireActivity();
+        MainActivity mainActivity = (MainActivity) requireActivity();
 
-        for(int i = 0; i < tvList.size(); i++){
+        for (int i = 0; i < tvList.size(); i++) {
             String category = mainActivity.recommendedCategories.get(i).toString().toLowerCase();
             String capitalized = category.substring(0, 1).toUpperCase() + category.substring(1);
             tvList.get(i).setText(capitalized);
@@ -95,34 +59,29 @@ public class HomeFragment extends Fragment {
         List<RecyclerView> rvList = Arrays.asList(rv_categorized_1, rv_categorized_2, rv_categorized_3, rv_categorized_4);
 
         List<List<Event>> categoriesEventsLists = new ArrayList<>();
-        for(Category category : mainActivity.recommendedCategories){
+        for (Category category : mainActivity.recommendedCategories) {
             List<Event> eventsList = mainActivity.getRecommendedEventsForCategory(category);
             categoriesEventsLists.add(eventsList);
         }
 
         initLists(rvList, categoriesEventsLists, view);
 
-        fab_all_events.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Fragment eventListFragment = new EventListFragment();
-                ((MainActivity)requireActivity()).setCurrentFragment(eventListFragment, true);
-            }
+        fab_all_events.setOnClickListener(view1 -> {
+            Fragment eventListFragment = new EventListFragment();
+            ((MainActivity) requireActivity()).setCurrentFragment(eventListFragment, true);
         });
 
         return view;
     }
-    private void initLists(List<RecyclerView> rvList, List<List<Event>> events, View view){
-        for(int i = 0; i < rvList.size(); i++){
+
+    private void initLists(List<RecyclerView> rvList, List<List<Event>> events, View view) {
+        for (int i = 0; i < rvList.size(); i++) {
             RecyclerView rv = rvList.get(i);
             EventAdapter adapter = new EventAdapter(events.get(i), requireContext());
-            adapter.setOnClickListener(new EventAdapter.OnClickListener() {
-                @Override
-                public void onClick(int position, Event event) {
-                    Intent intent = new Intent(requireActivity(), EventActivity.class);
-                    intent.putExtra(EVENT_KEY, event);
-                    startActivity(intent);
-                }
+            adapter.setOnClickListener((position, event) -> {
+                Intent intent = new Intent(requireActivity(), EventActivity.class);
+                intent.putExtra(EVENT_KEY, event);
+                startActivity(intent);
             });
             rv.setLayoutManager(new LinearLayoutManager(view.getContext(), LinearLayoutManager.HORIZONTAL, false));
             rv.setAdapter(adapter);
@@ -131,8 +90,9 @@ public class HomeFragment extends Fragment {
             rv.addItemDecoration(divider);
         }
     }
-    private void initComponents(View view){
-        rv_categorized_1= view.findViewById(R.id.rv_categorized_1);
+
+    private void initComponents(View view) {
+        rv_categorized_1 = view.findViewById(R.id.rv_categorized_1);
         rv_categorized_2 = view.findViewById(R.id.rv_categorized_2);
         rv_categorized_3 = view.findViewById(R.id.rv_categorized_3);
         rv_categorized_4 = view.findViewById(R.id.rv_categorized_4);

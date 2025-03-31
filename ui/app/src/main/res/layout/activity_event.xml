@@ -53,13 +53,13 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"
         android:clickable="true"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/events_slider"
-        app:srcCompat="@drawable/unsaved_icon"
-        app:tint="@color/black"
         app:backgroundTint="@android:color/transparent"
         app:elevation="0dp"
-        app:rippleColor="@android:color/transparent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/events_slider"
+        app:rippleColor="@android:color/transparent"
+        app:srcCompat="@drawable/unsaved_icon"
+        app:tint="@color/black" />
 
     <ScrollView
         android:id="@+id/sv_details_description"
@@ -102,12 +102,12 @@
         android:layout_marginStart="10dp"
         android:fontFamily="@font/fira_sans"
         android:textColor="@color/white"
+        android:textColorLink="@color/white"
         android:textSize="20sp"
         android:textStyle="italic"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/tv_details_end_time"
-        app:layout_constraintStart_toStartOf="parent"
-        android:textColorLink="@color/white"/>
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/tv_details_start_time"
@@ -164,8 +164,8 @@
         app:layout_constraintBottom_toTopOf="@+id/events_slider"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:rippleColor="@color/navbar_background"
         app:srcCompat="@drawable/back_icon"
-        app:tint="@color/black"
-        app:rippleColor="@color/navbar_background"/>
+        app:tint="@color/black" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

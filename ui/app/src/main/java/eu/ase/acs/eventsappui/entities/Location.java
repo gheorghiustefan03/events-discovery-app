@@ -17,8 +17,14 @@ public class Location implements Serializable {
         this.latitude = latitude;
         this.longitude = longitude;
     }
-    public int getId(){return id;}
-    public void setId(int id){this.id = id;}
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;
@@ -43,6 +49,7 @@ public class Location implements Serializable {
     public void setLongitude(float longitude) {
         this.longitude = longitude;
     }
+
     @NonNull
     @Override
     public Location clone() throws CloneNotSupportedException {

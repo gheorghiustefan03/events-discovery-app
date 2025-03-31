@@ -20,11 +20,11 @@ import androidx.fragment.app.FragmentTransaction;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import java.time.LocalDateTime;
+import org.threeten.bp.LocalDateTime;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -34,7 +34,7 @@ import eu.ase.acs.eventsappui.entities.Category;
 import eu.ase.acs.eventsappui.entities.Event;
 import eu.ase.acs.eventsappui.entities.Location;
 
-public class MainActivity extends AppCompatActivity{
+public class MainActivity extends AppCompatActivity {
     private static final String LOREM_IPSUM = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sit amet maximus purus, id sodales lorem. Sed velit ipsum, viverra vitae convallis fringilla, accumsan ac leo. Nulla aliquam at nulla sit amet ultricies. In et libero fringilla, gravida mi vel, tempus mauris. Vivamus ultrices, leo quis eleifend placerat, libero turpis mattis orci, vel auctor quam lacus id dui. Donec non ligula enim. Aliquam eget felis purus. Curabitur eget ex nisl. ";
     private BottomNavigationView nv_main;
     public List<Event> allEvents = new ArrayList<>();
@@ -58,27 +58,28 @@ public class MainActivity extends AppCompatActivity{
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 1);
             Toast.makeText(this, R.string.location_permission_warning, Toast.LENGTH_SHORT).show();
-        }else{
+        } else {
             run();
         }
     }
-    private void run(){
+
+    private void run() {
         FusedLocationProviderClient clientLocation = LocationServices.getFusedLocationProviderClient(this);
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         Task<android.location.Location> locationResult = clientLocation.getLastLocation();
-        locationResult.addOnSuccessListener((OnSuccessListener<android.location.Location>) location -> {
+        locationResult.addOnSuccessListener(location -> {
             if (location != null) {
                 userLocation = new LatLng(location.getLatitude(), location.getLongitude());
                 initComponents();
                 sharedPreferences = getSharedPreferences("preferences", Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
-                if(!sharedPreferences.contains("radius")){
+                if (!sharedPreferences.contains("radius")) {
                     editor.putLong("radius", 10000);
                     editor.apply();
                 }
-                if(!sharedPreferences.contains("saved_events_size")){
+                if (!sharedPreferences.contains("saved_events_size")) {
                     editor.putInt("saved_events_size", 0);
                     editor.apply();
                 }
@@ -98,13 +99,13 @@ public class MainActivity extends AppCompatActivity{
                     resetBackgrounds(nv_main);
                     setItemBackground(nv_main, item.getItemId(), R.drawable.nav_item_selected_background);
                     int itemId = item.getItemId();
-                    if(itemId == R.id.home)
+                    if (itemId == R.id.home)
                         getSupportFragmentManager().popBackStack();
-                    else if(itemId == R.id.search)
+                    else if (itemId == R.id.search)
                         setCurrentFragment(searchFragment, false);
-                    else if(itemId == R.id.map)
+                    else if (itemId == R.id.map)
                         setCurrentFragment(mapFragment, false);
-                    else if(itemId == R.id.settings)
+                    else if (itemId == R.id.settings)
                         setCurrentFragment(settingsFragment, false);
                     return true;
                 });
@@ -112,9 +113,11 @@ public class MainActivity extends AppCompatActivity{
         });
 
     }
-    private void initComponents(){
+
+    private void initComponents() {
         nv_main = findViewById(R.id.nv_main);
     }
+
     private void resetBackgrounds(BottomNavigationView bottomNavigationView) {
         for (int i = 0; i < bottomNavigationView.getMenu().size(); i++) {
             MenuItem item = bottomNavigationView.getMenu().getItem(i);
@@ -123,48 +126,50 @@ public class MainActivity extends AppCompatActivity{
     }
 
 
-    public void scanForEvents(){
+    public void scanForEvents() {
         getRecommendedCategories();
         getAllLocations();
         getAllRecommendedEvents();
         getSavedEvents();
     }
-    private void setItemBackground(BottomNavigationView bnv, int itemId, int backgroundId){
+
+    private void setItemBackground(BottomNavigationView bnv, int itemId, int backgroundId) {
         bnv.findViewById(itemId).setBackgroundResource(backgroundId);
     }
+
     public void setCurrentFragment(Fragment fragment, boolean animate) {
         Fragment currentFragment = getSupportFragmentManager().findFragmentById(R.id.fl_main);
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        if(animate && !(fragment instanceof HomeFragment)){
+        if (animate && !(fragment instanceof HomeFragment)) {
             transaction.setCustomAnimations(R.anim.enter_down, R.anim.exit_down);
-        }
-        else if(animate){
+        } else if (animate) {
             transaction.setCustomAnimations(R.anim.enter_up, R.anim.exit_up);
         }
         transaction.replace(R.id.fl_main, fragment);
-        if(currentFragment instanceof EventListFragment
-        || currentFragment instanceof HomeFragment){
+        if (currentFragment instanceof EventListFragment
+                || currentFragment instanceof HomeFragment) {
             transaction.addToBackStack(null);
         }
         transaction.commit();
     }
-    public void getAllRecommendedEvents(){
+
+    public void getAllRecommendedEvents() {
         allEvents.clear();
-        for(int i = 0; i < 100; i++){
+        for (int i = 0; i < 100; i++) {
             Category[] categories = Category.values();
             Random random = new Random();
             int nrCategories = 1;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-                nrCategories = random.nextInt(1,5);
+                nrCategories = random.nextInt(1, 5);
             }
             List<Category> chosenCategories = new ArrayList<>(nrCategories);
-            for(int j = 0; j < nrCategories; j++){
+            for (int j = 0; j < nrCategories; j++) {
                 Category category = categories[random.nextInt(categories.length)];
-                if(!chosenCategories.contains(category))
+                if (!chosenCategories.contains(category))
                     chosenCategories.add(category);
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Event event = new Event(i,"Event " + (i+1), LOREM_IPSUM,
+                Event event = new Event(i, "Event " + (i + 1), LOREM_IPSUM,
                         allLocations.get(random.nextInt(allLocations.size())), chosenCategories,
                         List.of("https://picsum.photos/1920/1080", "https://picsum.photos/1920/1080"),
                         "https://www.google.com", LocalDateTime.now(),
@@ -173,15 +178,17 @@ public class MainActivity extends AppCompatActivity{
             }
         }
     }
-    public void getAllLocations(){
-        allLocations.clear();
-        for(int i = 0; i < 10; i++){
-            double[] randomCoordinates;
-randomCoordinates = generateRandomCoordinate(userLocation.latitude, userLocation.longitude, radius / 1000);
 
-            allLocations.add(new Location(i,"Location " + (i+1), randomCoordinates[0], randomCoordinates[1]));
+    public void getAllLocations() {
+        allLocations.clear();
+        for (int i = 0; i < 10; i++) {
+            double[] randomCoordinates;
+            randomCoordinates = generateRandomCoordinate(userLocation.latitude, userLocation.longitude, radius / 1000);
+
+            allLocations.add(new Location(i, "Location " + (i + 1), randomCoordinates[0], randomCoordinates[1]));
         }
     }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions,
                                            int[] grantResults) {
@@ -197,25 +204,28 @@ randomCoordinates = generateRandomCoordinate(userLocation.latitude, userLocation
             }
         }
     }
-    public void getRecommendedCategories(){
+
+    public void getRecommendedCategories() {
         recommendedCategories.clear();
         recommendedCategories = new ArrayList<>(4);
         Category[] categories = Category.values();
         Random random = new Random();
-        for(int j = 0; j < 4; j++){
+        for (int j = 0; j < 4; j++) {
             Category category = categories[random.nextInt(categories.length)];
-            if(!recommendedCategories.contains(category))
+            if (!recommendedCategories.contains(category))
                 recommendedCategories.add(category);
             else j--;
         }
     }
-    public List<Event> getRecommendedEventsForCategory(Category category){
+
+    public List<Event> getRecommendedEventsForCategory(Category category) {
         List<Event> result = null;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             result = allEvents.stream().filter(e -> e.getCategories().contains(category)).toList();
         }
         return result;
     }
+
     private double[] generateRandomCoordinate(double centerLat, double centerLong, double radiusInKm) {
         Random rand = new Random();
         final int EARTH_RADIUS = 6371;
@@ -233,15 +243,16 @@ randomCoordinates = generateRandomCoordinate(userLocation.latitude, userLocation
 
         return new double[]{randomLat, randomLong};
     }
-    void getSavedEvents(){
+
+    void getSavedEvents() {
         savedEvents.clear();
         int size = sharedPreferences.getInt("saved_events_size", 0);
-        for(int i = 0; i < size; i++){
-            int id = sharedPreferences.getInt("saved_events_"+i, 0);
-                List<Event> event = allEvents.stream().filter(e -> e.getId() == id).collect(Collectors.toList());
-                if(!event.isEmpty()){
-                    savedEvents.add(event.get(0));
-                }
+        for (int i = 0; i < size; i++) {
+            int id = sharedPreferences.getInt("saved_events_" + i, 0);
+            List<Event> event = allEvents.stream().filter(e -> e.getId() == id).collect(Collectors.toList());
+            if (!event.isEmpty()) {
+                savedEvents.add(event.get(0));
+            }
         }
     }
 }

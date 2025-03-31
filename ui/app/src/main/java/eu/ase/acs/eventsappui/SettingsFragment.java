@@ -20,10 +20,6 @@ public class SettingsFragment extends Fragment {
     public SettingsFragment() {
 
     }
-    public static SettingsFragment newInstance(String param1, String param2) {
-        SettingsFragment fragment = new SettingsFragment();
-        return fragment;
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -35,28 +31,33 @@ public class SettingsFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
         initComponents(view);
-        mainActivity = (MainActivity)(requireActivity());
+        mainActivity = (MainActivity) (requireActivity());
         SharedPreferences sharedPreferences = requireContext().getSharedPreferences("preferences", Context.MODE_PRIVATE);
         mainActivity.radius = sharedPreferences.getLong("radius", 0);
-        sbRadius.setProgress((int)(mainActivity.radius/ 1000));
-        tvSliderValue.setText(Long.toString(mainActivity.radius/1000));
+        sbRadius.setProgress((int) (mainActivity.radius / 1000));
+        tvSliderValue.setText(Long.toString(mainActivity.radius / 1000));
         sbRadius.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putLong("radius", i * 1000);
+                editor.putLong("radius", i * 1000L);
                 editor.apply();
-                mainActivity.radius = i * 1000;
+                mainActivity.radius = i * 1000L;
                 tvSliderValue.setText(Integer.toString(i));
             }
+
             @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {}
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
             @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {}
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
         });
         return view;
     }
-    private void initComponents(View view){
+
+    private void initComponents(View view) {
         sbRadius = view.findViewById(R.id.sbRadius);
         tvSliderValue = view.findViewById(R.id.tvSliderValue);
     }

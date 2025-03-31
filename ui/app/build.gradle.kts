@@ -8,6 +8,10 @@ android {
     namespace = "eu.ase.acs.eventsappui"
     compileSdk = 35
 
+    tasks.withType<JavaCompile>().configureEach {
+        options.compilerArgs.add("-Xlint:deprecation")
+    }
+
     defaultConfig {
         val localProperties = Properties()
         val localPropertiesFile = rootProject.file("local.properties")
@@ -58,4 +62,10 @@ dependencies {
     implementation(libs.play.services.maps)
     implementation(libs.gms.play.services.location)
     implementation(libs.android.maps.utils)
+    implementation(libs.threetenabp)
+}
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }

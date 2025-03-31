@@ -29,14 +29,14 @@
         android:backgroundTint="@color/navbar_background"
         android:backgroundTintMode="src_over"
         android:max="100"
+        android:min="5"
         android:progressBackgroundTint="@color/navbar_background"
         android:progressBackgroundTintMode="src_over"
         android:progressTint="@color/black"
         android:thumbTint="@color/black"
         app:layout_constraintEnd_toStartOf="@+id/tvSliderValue"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvRadiusSlider"
-        android:min="5"/>
+        app:layout_constraintTop_toBottomOf="@+id/tvRadiusSlider" />
 
     <TextView
         android:id="@+id/tvSliderValue"

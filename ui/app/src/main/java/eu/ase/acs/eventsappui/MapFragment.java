@@ -1,6 +1,5 @@
 package eu.ase.acs.eventsappui;
 
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -27,7 +26,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.time.LocalDateTime;
+import org.threeten.bp.LocalDateTime;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,11 +36,6 @@ import eu.ase.acs.eventsappui.adapters.MapPinDropdownAdapter;
 import eu.ase.acs.eventsappui.entities.Event;
 import eu.ase.acs.eventsappui.entities.Location;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link MapFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class MapFragment extends Fragment implements OnMapReadyCallback {
     GoogleMap gMap;
     private static CameraPosition position = null;
@@ -50,10 +45,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     public MapFragment() {
     }
 
-
-    public static MapFragment newInstance() {
-        return new MapFragment();
-    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -78,20 +69,20 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         gMap = googleMap;
         gMap.clear();
         gMap.setInfoWindowAdapter(new MapPinDropdownAdapter(requireContext()));
-        mainActivity = (MainActivity)requireActivity();
+        mainActivity = (MainActivity) requireActivity();
         for (Location location : mainActivity.allLocations) {
             gMap.addMarker(new MarkerOptions().position(
                     new LatLng(location.getLatitude(), location.getLongitude())
             ).title(location.getName())).setTag(location);
         }
         gMap.setOnMarkerClickListener(marker -> {
-            if(marker.getTag() != null){
+            if (marker.getTag() != null) {
                 showEventDialog(marker);
                 return false;
             }
             return true;
         });
-        if(position == null){
+        if (position == null) {
             position = CameraPosition.fromLatLngZoom(mainActivity.userLocation, 15);
         }
         gMap.moveCamera(CameraUpdateFactory.newCameraPosition(position));
@@ -100,9 +91,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         userLocationMarker.setTag(null);
     }
 
-    @SuppressLint("NewApi")
     private void showEventDialog(Marker marker) {
-        Location location = (Location)marker.getTag();
+        Location location = (Location) marker.getTag();
         List<Event> eventsAtLocation = mainActivity.allEvents.stream()
                 .filter(e -> e.getLocation().equals(location))
                 .collect(Collectors.toList());
@@ -124,7 +114,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                if(!isSpinnerInitialized){
+                if (!isSpinnerInitialized) {
                     isSpinnerInitialized = true;
                     return;
                 }

@@ -3,7 +3,9 @@ package eu.ase.acs.eventsappui.entities;
 import androidx.annotation.NonNull;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
+
+import org.threeten.bp.LocalDateTime;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,8 +19,14 @@ public class Event implements Serializable {
     private String link;
     private LocalDateTime startDate, endDate;
 
-    public int getId(){return id;}
-    public void setId(int id){this.id = id;}
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
     public LocalDateTime getStartDate() {
         return startDate;
     }

@@ -1,13 +1,10 @@
 package eu.ase.acs.eventsappui;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
-import android.util.Log;
-import android.view.View;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
@@ -19,7 +16,8 @@ import androidx.core.view.WindowInsetsCompat;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.smarteist.autoimageslider.SliderView;
 
-import java.time.LocalDateTime;
+import org.threeten.bp.LocalDateTime;
+
 import java.util.List;
 import java.util.Locale;
 
@@ -34,7 +32,7 @@ public class EventActivity extends AppCompatActivity {
     private int savedArraySize;
     FloatingActionButton fabSave;
     FloatingActionButton fabBack;
-    @SuppressLint("NewApi")
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,12 +46,13 @@ public class EventActivity extends AppCompatActivity {
 
         initComponents();
 
-        event = (Event) (getIntent().getSerializableExtra(HomeFragment.EVENT_KEY));
+        Bundle bundle = getIntent().getExtras();
+        event = (Event) bundle.getSerializable(HomeFragment.EVENT_KEY);
 
         SharedPreferences sharedPreferences = getSharedPreferences("preferences", Context.MODE_PRIVATE);
         savedArraySize = sharedPreferences.getInt("saved_events_size", 0);
-        for(int i = 0; i < savedArraySize; i++){
-            if(sharedPreferences.getInt("saved_events_"+i, -1) == event.getId()){
+        for (int i = 0; i < savedArraySize; i++) {
+            if (sharedPreferences.getInt("saved_events_" + i, -1) == event.getId()) {
                 savedArrayIndex = i;
                 fabSave.setImageResource(R.drawable.saved_icon);
                 break;
@@ -61,7 +60,7 @@ public class EventActivity extends AppCompatActivity {
         }
 
         List<String> imgUrls = event.getImageUrls();
-        SliderAdapter adapter = new SliderAdapter(this, imgUrls);
+        SliderAdapter adapter = new SliderAdapter(imgUrls);
         eventsSlider.setSliderAdapter(adapter);
         tvName.setText(event.getName());
         tvDescription.setText(event.getDescription());
@@ -71,7 +70,7 @@ public class EventActivity extends AppCompatActivity {
         tvLocation.setMovementMethod(LinkMovementMethod.getInstance());
         tvLink.setText(Html.fromHtml(
                 "<a href=\"" + event.getLink() + "\">" + getResources().getString(R.string.organizer_page_hyperlink) + "</a>"
-        , Html.FROM_HTML_MODE_COMPACT));
+                , Html.FROM_HTML_MODE_COMPACT));
         tvLink.setMovementMethod(LinkMovementMethod.getInstance());
 
         LocalDateTime startDate = event.getStartDate();
@@ -96,17 +95,17 @@ public class EventActivity extends AppCompatActivity {
         });
         fabSave.setOnClickListener(view -> {
             SharedPreferences.Editor editor = sharedPreferences.edit();
-            if(savedArrayIndex == -1){
+            if (savedArrayIndex == -1) {
                 editor.putInt("saved_events_size", savedArraySize + 1);
-                editor.putInt("saved_events_"+(savedArraySize), event.getId());
+                editor.putInt("saved_events_" + (savedArraySize), event.getId());
                 savedArraySize += 1;
                 savedArrayIndex = savedArraySize - 1;
                 fabSave.setImageResource(R.drawable.saved_icon);
-            }else{
-                for(int i = savedArrayIndex; i < savedArraySize-1; i++){
-                    editor.putInt("saved_events_"+i, sharedPreferences.getInt("saved_events_"+(i+1), 0));
+            } else {
+                for (int i = savedArrayIndex; i < savedArraySize - 1; i++) {
+                    editor.putInt("saved_events_" + i, sharedPreferences.getInt("saved_events_" + (i + 1), 0));
                 }
-                editor.remove("saved_events_"+(savedArraySize-1));
+                editor.remove("saved_events_" + (savedArraySize - 1));
                 editor.putInt("saved_events_size", savedArraySize - 1);
                 savedArrayIndex = -1;
                 savedArraySize -= 1;
@@ -116,7 +115,7 @@ public class EventActivity extends AppCompatActivity {
         });
     }
 
-    private void initComponents(){
+    private void initComponents() {
         eventsSlider = findViewById(R.id.events_slider);
         tvName = findViewById(R.id.tv_details_name);
         tvDescription = findViewById(R.id.tv_details_description);

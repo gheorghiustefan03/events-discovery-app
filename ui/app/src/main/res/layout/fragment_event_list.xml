@@ -15,12 +15,12 @@
         android:layout_marginEnd="10dp"
         android:clickable="true"
         android:src="@drawable/unsaved_icon"
-        app:tint="@color/black"
         app:backgroundTint="@android:color/transparent"
         app:elevation="0dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:rippleColor="@android:color/transparent" />
+        app:rippleColor="@android:color/transparent"
+        app:tint="@color/black" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_recommended"
@@ -35,7 +35,7 @@
         app:backgroundTint="@color/navbar_background"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:tint="@color/black"/>
+        app:tint="@color/black" />
 
     <TextView
         android:id="@+id/tv_all_events"
