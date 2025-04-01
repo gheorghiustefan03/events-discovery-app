@@ -8,19 +8,39 @@
     tools:context=".EventListFragment">
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_sort"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:src="@drawable/sort_icon"
+        app:layout_constraintEnd_toStartOf="@+id/fab_view_saved"
+        app:layout_constraintTop_toTopOf="parent"
+        android:backgroundTint="@color/background"
+        android:clickable="true"
+        android:padding="0dp"
+        android:stateListAnimator="@null"
+        app:elevation="0dp"
+        app:fabSize="mini"
+        app:rippleColor="@color/navbar_background"
+        app:tint="@color/black"/>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_view_saved"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="10dp"
-        android:clickable="true"
         android:src="@drawable/unsaved_icon"
-        app:backgroundTint="@android:color/transparent"
-        app:elevation="0dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:rippleColor="@android:color/transparent"
-        app:tint="@color/black" />
+        android:backgroundTint="@color/background"
+        android:clickable="true"
+        android:padding="0dp"
+        android:stateListAnimator="@null"
+        app:elevation="0dp"
+        app:fabSize="mini"
+        app:rippleColor="@color/navbar_background"
+        app:tint="@color/black"/>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_recommended"

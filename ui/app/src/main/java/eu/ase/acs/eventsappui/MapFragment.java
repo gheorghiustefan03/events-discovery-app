@@ -99,7 +99,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         eventsAtLocation.add(0, new Event(-1, "Select an event:", "dummy event", location, new ArrayList<>(), new ArrayList<>(), "", LocalDateTime.now(), LocalDateTime.now()));
 
         View dialogView = getLayoutInflater().inflate(R.layout.event_dialog_layout, null);
-        Spinner spinner = dialogView.findViewById(R.id.dialogSpinnerEvents);
+        Spinner spinner = dialogView.findViewById(R.id.dialog_spinner_events);
         ArrayAdapter<Event> adapter = new ArrayAdapter<>(requireActivity(),
                 android.R.layout.simple_spinner_item, eventsAtLocation);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);

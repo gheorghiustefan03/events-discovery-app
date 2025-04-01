@@ -26,7 +26,10 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import org.threeten.bp.LocalDateTime;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -36,7 +39,7 @@ import eu.ase.acs.eventsappui.entities.Location;
 
 public class MainActivity extends AppCompatActivity {
     private static final String LOREM_IPSUM = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sit amet maximus purus, id sodales lorem. Sed velit ipsum, viverra vitae convallis fringilla, accumsan ac leo. Nulla aliquam at nulla sit amet ultricies. In et libero fringilla, gravida mi vel, tempus mauris. Vivamus ultrices, leo quis eleifend placerat, libero turpis mattis orci, vel auctor quam lacus id dui. Donec non ligula enim. Aliquam eget felis purus. Curabitur eget ex nisl. ";
-    private BottomNavigationView nv_main;
+    private BottomNavigationView nvMain;
     public List<Event> allEvents = new ArrayList<>();
     public List<Event> savedEvents = new ArrayList<>();
     public List<Location> allLocations = new ArrayList<>();
@@ -44,6 +47,10 @@ public class MainActivity extends AppCompatActivity {
     public LatLng userLocation = null;
     public long radius;
     private SharedPreferences sharedPreferences;
+    public Map<Integer, Integer> recommendedIndices = new HashMap<>();
+    public String savedEventsSorting = "Recommended";
+    public String allEventsSorting = "Recommended";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,11 +100,11 @@ public class MainActivity extends AppCompatActivity {
                 Fragment settingsFragment = new SettingsFragment();
                 setCurrentFragment(homeFragment, true);
 
-                resetBackgrounds(nv_main);
-                setItemBackground(nv_main, nv_main.getSelectedItemId(), R.drawable.nav_item_selected_background);
-                nv_main.setOnItemSelectedListener(item -> {
-                    resetBackgrounds(nv_main);
-                    setItemBackground(nv_main, item.getItemId(), R.drawable.nav_item_selected_background);
+                resetBackgrounds(nvMain);
+                setItemBackground(nvMain, nvMain.getSelectedItemId(), R.drawable.nav_item_selected_background);
+                nvMain.setOnItemSelectedListener(item -> {
+                    resetBackgrounds(nvMain);
+                    setItemBackground(nvMain, item.getItemId(), R.drawable.nav_item_selected_background);
                     int itemId = item.getItemId();
                     if (itemId == R.id.home)
                         getSupportFragmentManager().popBackStack();
@@ -115,13 +122,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initComponents() {
-        nv_main = findViewById(R.id.nv_main);
+        nvMain = findViewById(R.id.nv_main);
     }
 
     private void resetBackgrounds(BottomNavigationView bottomNavigationView) {
         for (int i = 0; i < bottomNavigationView.getMenu().size(); i++) {
             MenuItem item = bottomNavigationView.getMenu().getItem(i);
-            setItemBackground(nv_main, item.getItemId(), R.color.navbar_background);
+            setItemBackground(nvMain, item.getItemId(), R.color.navbar_background);
         }
     }
 
@@ -155,12 +162,17 @@ public class MainActivity extends AppCompatActivity {
 
     public void getAllRecommendedEvents() {
         allEvents.clear();
+        recommendedIndices.clear();
         for (int i = 0; i < 100; i++) {
+
             Category[] categories = Category.values();
             Random random = new Random();
             int nrCategories = 1;
+            int startMonth = 1, startDay = 1;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
                 nrCategories = random.nextInt(1, 5);
+                startMonth = random.nextInt(3, 8);
+                startDay = random.nextInt(1, 30);
             }
             List<Category> chosenCategories = new ArrayList<>(nrCategories);
             for (int j = 0; j < nrCategories; j++) {
@@ -168,13 +180,15 @@ public class MainActivity extends AppCompatActivity {
                 if (!chosenCategories.contains(category))
                     chosenCategories.add(category);
             }
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 Event event = new Event(i, "Event " + (i + 1), LOREM_IPSUM,
                         allLocations.get(random.nextInt(allLocations.size())), chosenCategories,
                         List.of("https://picsum.photos/1920/1080", "https://picsum.photos/1920/1080"),
-                        "https://www.google.com", LocalDateTime.now(),
-                        LocalDateTime.of(2025, 6, 12, 12, 0));
+                        "https://www.google.com", LocalDateTime.of(2025, startMonth, startDay, 12, 0),
+                        LocalDateTime.of(2025, 8, 12, 12, 0));
                 allEvents.add(event);
+                recommendedIndices.put(event.getId(), i);
             }
         }
     }
@@ -254,5 +268,6 @@ public class MainActivity extends AppCompatActivity {
                 savedEvents.add(event.get(0));
             }
         }
+        savedEvents.sort(Comparator.comparingInt(e -> recommendedIndices.get(e.getId())));
     }
 }

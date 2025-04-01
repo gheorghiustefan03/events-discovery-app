@@ -58,8 +58,8 @@ public class SettingsFragment extends Fragment {
     }
 
     private void initComponents(View view) {
-        sbRadius = view.findViewById(R.id.sbRadius);
-        tvSliderValue = view.findViewById(R.id.tvSliderValue);
+        sbRadius = view.findViewById(R.id.sb_radius);
+        tvSliderValue = view.findViewById(R.id.tv_slider_value);
     }
 
     @Override

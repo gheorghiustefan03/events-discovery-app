@@ -36,13 +36,12 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
         android:layout_marginTop="5dp"
-        android:layout_marginEnd="10dp"
         android:fontFamily="@font/fira_sans"
         android:text=""
         android:textColor="@color/white"
         android:textSize="34sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@+id/floatingActionButton"
+        app:layout_constraintEnd_toStartOf="@+id/fab_save"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/events_slider" />
 
@@ -52,14 +51,18 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"
-        android:clickable="true"
-        app:backgroundTint="@android:color/transparent"
-        app:elevation="0dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/events_slider"
-        app:rippleColor="@android:color/transparent"
         app:srcCompat="@drawable/unsaved_icon"
-        app:tint="@color/black" />
+        android:backgroundTint="@color/background"
+        android:clickable="true"
+        android:padding="0dp"
+        android:stateListAnimator="@null"
+        app:elevation="0dp"
+        app:fabSize="mini"
+        app:rippleColor="@color/navbar_background"
+        app:tint="@color/black"/>
+
 
     <ScrollView
         android:id="@+id/sv_details_description"

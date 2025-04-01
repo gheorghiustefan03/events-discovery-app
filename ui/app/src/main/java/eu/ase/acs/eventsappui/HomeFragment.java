@@ -26,9 +26,9 @@ import eu.ase.acs.eventsappui.entities.Event;
 
 public class HomeFragment extends Fragment {
     public static final String EVENT_KEY = "eventkey";
-    private RecyclerView rv_categorized_1, rv_categorized_2, rv_categorized_3, rv_categorized_4;
-    private TextView tv_category_1, tv_category_2, tv_category_3, tv_category_4;
-    private FloatingActionButton fab_all_events;
+    private RecyclerView rvCategorized1, rvCategorized2, rvCategorized3, rvCategorized4;
+    private TextView tvCategory1, tvCategory2, tvCategory3, tvCategory4;
+    private FloatingActionButton fabAllEvents;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -47,16 +47,17 @@ public class HomeFragment extends Fragment {
 
         initComponents(view);
 
-        List<TextView> tvList = Arrays.asList(tv_category_1, tv_category_2, tv_category_3, tv_category_4);
+        List<TextView> tvList = Arrays.asList(tvCategory1, tvCategory2, tvCategory3, tvCategory4);
         MainActivity mainActivity = (MainActivity) requireActivity();
 
         for (int i = 0; i < tvList.size(); i++) {
             String category = mainActivity.recommendedCategories.get(i).toString().toLowerCase();
             String capitalized = category.substring(0, 1).toUpperCase() + category.substring(1);
-            tvList.get(i).setText(capitalized);
+            String displayable = capitalized.replace("_", ", ");
+            tvList.get(i).setText(displayable);
         }
 
-        List<RecyclerView> rvList = Arrays.asList(rv_categorized_1, rv_categorized_2, rv_categorized_3, rv_categorized_4);
+        List<RecyclerView> rvList = Arrays.asList(rvCategorized1, rvCategorized2, rvCategorized3, rvCategorized4);
 
         List<List<Event>> categoriesEventsLists = new ArrayList<>();
         for (Category category : mainActivity.recommendedCategories) {
@@ -66,13 +67,15 @@ public class HomeFragment extends Fragment {
 
         initLists(rvList, categoriesEventsLists, view);
 
-        fab_all_events.setOnClickListener(view1 -> {
+        fabAllEvents.setOnClickListener(view1 -> {
             Fragment eventListFragment = new EventListFragment();
             ((MainActivity) requireActivity()).setCurrentFragment(eventListFragment, true);
         });
 
         return view;
     }
+
+
 
     private void initLists(List<RecyclerView> rvList, List<List<Event>> events, View view) {
         for (int i = 0; i < rvList.size(); i++) {
@@ -92,16 +95,16 @@ public class HomeFragment extends Fragment {
     }
 
     private void initComponents(View view) {
-        rv_categorized_1 = view.findViewById(R.id.rv_categorized_1);
-        rv_categorized_2 = view.findViewById(R.id.rv_categorized_2);
-        rv_categorized_3 = view.findViewById(R.id.rv_categorized_3);
-        rv_categorized_4 = view.findViewById(R.id.rv_categorized_4);
+        rvCategorized1 = view.findViewById(R.id.rv_categorized_1);
+        rvCategorized2 = view.findViewById(R.id.rv_categorized_2);
+        rvCategorized3 = view.findViewById(R.id.rv_categorized_3);
+        rvCategorized4 = view.findViewById(R.id.rv_categorized_4);
 
-        tv_category_1 = view.findViewById(R.id.tv_category_1);
-        tv_category_2 = view.findViewById(R.id.tv_category_2);
-        tv_category_3 = view.findViewById(R.id.tv_category_3);
-        tv_category_4 = view.findViewById(R.id.tv_category_4);
+        tvCategory1 = view.findViewById(R.id.tv_category_1);
+        tvCategory2 = view.findViewById(R.id.tv_category_2);
+        tvCategory3 = view.findViewById(R.id.tv_category_3);
+        tvCategory4 = view.findViewById(R.id.tv_category_4);
 
-        fab_all_events = view.findViewById(R.id.fab_all_events);
+        fabAllEvents = view.findViewById(R.id.fab_all_events);
     }
 }

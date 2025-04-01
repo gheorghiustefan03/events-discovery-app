@@ -8,7 +8,7 @@
     tools:context=".SettingsFragment">
 
     <TextView
-        android:id="@+id/tvRadiusSlider"
+        android:id="@+id/tv_radius_slider"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
@@ -22,7 +22,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <SeekBar
-        android:id="@+id/sbRadius"
+        android:id="@+id/sb_radius"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -34,12 +34,12 @@
         android:progressBackgroundTintMode="src_over"
         android:progressTint="@color/black"
         android:thumbTint="@color/black"
-        app:layout_constraintEnd_toStartOf="@+id/tvSliderValue"
+        app:layout_constraintEnd_toStartOf="@+id/tv_slider_value"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvRadiusSlider" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_radius_slider" />
 
     <TextView
-        android:id="@+id/tvSliderValue"
+        android:id="@+id/tv_slider_value"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
@@ -50,5 +50,5 @@
         android:textSize="17sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvRadiusSlider" />
+        app:layout_constraintTop_toBottomOf="@+id/tv_radius_slider" />
 </androidx.constraintlayout.widget.ConstraintLayout>

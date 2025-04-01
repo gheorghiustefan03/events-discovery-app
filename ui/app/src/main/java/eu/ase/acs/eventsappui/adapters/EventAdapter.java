@@ -85,10 +85,10 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
         public EventViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvName = itemView.findViewById(R.id.tvName);
-            tvLocation = itemView.findViewById(R.id.tvLocation);
-            ivHeader = itemView.findViewById(R.id.ivHeader);
-            tvStartDate = itemView.findViewById(R.id.tvStartDate);
+            tvName = itemView.findViewById(R.id.tv_name);
+            tvLocation = itemView.findViewById(R.id.tv_location);
+            ivHeader = itemView.findViewById(R.id.iv_header);
+            tvStartDate = itemView.findViewById(R.id.tv_start_date);
         }
 
         public void setName(String name) {

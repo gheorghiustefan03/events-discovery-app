@@ -9,7 +9,7 @@
     android:focusable="true">
 
     <TextView
-        android:id="@+id/tvName"
+        android:id="@+id/tv_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
@@ -25,7 +25,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <ImageView
-        android:id="@+id/ivHeader"
+        android:id="@+id/iv_header"
         android:layout_width="80dp"
         android:layout_height="0dp"
         android:layout_marginStart="10dp"
@@ -34,11 +34,11 @@
         app:layout_constraintDimensionRatio="9:16"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvName"
+        app:layout_constraintTop_toBottomOf="@+id/tv_name"
         app:srcCompat="@android:drawable/alert_dark_frame" />
 
     <TextView
-        android:id="@+id/tvLocation"
+        android:id="@+id/tv_location"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
@@ -55,11 +55,11 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.512"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ivHeader"
+        app:layout_constraintTop_toBottomOf="@+id/iv_header"
         app:layout_constraintVertical_bias="0.0" />
 
     <TextView
-        android:id="@+id/tvStartDate"
+        android:id="@+id/tv_start_date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="10dp"
@@ -76,7 +76,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.512"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvLocation"
+        app:layout_constraintTop_toBottomOf="@+id/tv_location"
         app:layout_constraintVertical_bias="0.416" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

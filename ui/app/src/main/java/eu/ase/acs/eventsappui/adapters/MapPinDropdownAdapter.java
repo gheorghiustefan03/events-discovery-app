@@ -22,7 +22,7 @@ public class MapPinDropdownAdapter implements GoogleMap.InfoWindowAdapter {
     @Override
     public View getInfoWindow(Marker marker) {
         View view = LayoutInflater.from(context).inflate(R.layout.map_pin_info_window, null);
-        TextView locationName = view.findViewById(R.id.locationName);
+        TextView locationName = view.findViewById(R.id.location_name);
         Location location = (Location) marker.getTag();
         locationName.setText(location.getName());
         return view;
