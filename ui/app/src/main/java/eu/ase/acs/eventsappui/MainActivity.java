@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Toast;
 
@@ -79,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
         locationResult.addOnSuccessListener(location -> {
             if (location != null) {
                 userLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                Log.e("USER LOCATION", location.getLatitude() + " " +  location.getLongitude());
                 initComponents();
                 sharedPreferences = getSharedPreferences("preferences", Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();

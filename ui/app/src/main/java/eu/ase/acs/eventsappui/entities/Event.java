@@ -104,7 +104,8 @@ public class Event implements Serializable {
     }
 
     public void setImageUrls(List<String> imageUrls) {
-        this.imageUrls = new ArrayList<>(imageUrls);
+        if(imageUrls == null) this.imageUrls = new ArrayList<>();
+        else this.imageUrls = new ArrayList<>(imageUrls);
     }
 
     @NonNull
