@@ -17,6 +17,10 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.MediatorLiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -26,6 +30,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import org.threeten.bp.LocalDateTime;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -34,9 +39,17 @@ import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+import eu.ase.acs.eventsappui.api.ApiService;
+import eu.ase.acs.eventsappui.api.ApiViewModel;
+import eu.ase.acs.eventsappui.api.ApiViewModelFactory;
 import eu.ase.acs.eventsappui.entities.Category;
 import eu.ase.acs.eventsappui.entities.Event;
 import eu.ase.acs.eventsappui.entities.Location;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
     private static final String LOREM_IPSUM = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sit amet maximus purus, id sodales lorem. Sed velit ipsum, viverra vitae convallis fringilla, accumsan ac leo. Nulla aliquam at nulla sit amet ultricies. In et libero fringilla, gravida mi vel, tempus mauris. Vivamus ultrices, leo quis eleifend placerat, libero turpis mattis orci, vel auctor quam lacus id dui. Donec non ligula enim. Aliquam eget felis purus. Curabitur eget ex nisl. ";
@@ -51,6 +64,8 @@ public class MainActivity extends AppCompatActivity {
     public Map<Integer, Integer> recommendedIndices = new HashMap<>();
     public String savedEventsSorting = "Recommended";
     public String allEventsSorting = "Recommended";
+    private ApiService apiService;
+    private ApiViewModel apiViewModel;
 
 
     @Override
@@ -77,50 +92,62 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         Task<android.location.Location> locationResult = clientLocation.getLastLocation();
-        locationResult.addOnSuccessListener(location -> {
-            if (location != null) {
-                userLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                Log.e("USER LOCATION", location.getLatitude() + " " +  location.getLongitude());
-                initComponents();
-                sharedPreferences = getSharedPreferences("preferences", Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                if (!sharedPreferences.contains("radius")) {
-                    editor.putLong("radius", 10000);
-                    editor.apply();
+
+            locationResult.addOnSuccessListener(location -> {
+                if (location != null) {
+                    userLocation = new LatLng(location.getLatitude(), location.getLongitude());
+                    initComponents();
+                    sharedPreferences = getSharedPreferences("preferences", Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    if (!sharedPreferences.contains("radius")) {
+                        editor.putLong("radius", 10000);
+                        editor.apply();
+                    }
+                    if (!sharedPreferences.contains("saved_events_size")) {
+                        editor.putInt("saved_events_size", 0);
+                        editor.apply();
+                    }
+                    radius = sharedPreferences.getLong("radius", 0);
+
+                    Retrofit retrofit = new Retrofit.Builder()
+                            .baseUrl("http://10.0.2.2:5073/api/")  // Base URL
+                            .addConverterFactory(GsonConverterFactory.create())
+                            .build();
+                    apiService = retrofit.create(ApiService.class);
+                    ApiViewModelFactory factory = new ApiViewModelFactory(apiService, this);
+                    apiViewModel = new ViewModelProvider(this, factory).get(ApiViewModel.class);
+
+                    scanForEvents();
                 }
-                if (!sharedPreferences.contains("saved_events_size")) {
-                    editor.putInt("saved_events_size", 0);
-                    editor.apply();
-                }
-                radius = sharedPreferences.getLong("radius", 0);
+            });
 
-                scanForEvents();
 
-                Fragment homeFragment = new HomeFragment();
-                Fragment searchFragment = new SearchFragment();
-                Fragment mapFragment = new MapFragment();
-                Fragment settingsFragment = new SettingsFragment();
-                setCurrentFragment(homeFragment, true);
 
-                resetBackgrounds(nvMain);
-                setItemBackground(nvMain, nvMain.getSelectedItemId(), R.drawable.nav_item_selected_background);
-                nvMain.setOnItemSelectedListener(item -> {
-                    resetBackgrounds(nvMain);
-                    setItemBackground(nvMain, item.getItemId(), R.drawable.nav_item_selected_background);
-                    int itemId = item.getItemId();
-                    if (itemId == R.id.home)
-                        getSupportFragmentManager().popBackStack();
-                    else if (itemId == R.id.search)
-                        setCurrentFragment(searchFragment, false);
-                    else if (itemId == R.id.map)
-                        setCurrentFragment(mapFragment, false);
-                    else if (itemId == R.id.settings)
-                        setCurrentFragment(settingsFragment, false);
-                    return true;
-                });
-            }
+    }
+
+    private void onDataFetched(){
+        Fragment homeFragment = new HomeFragment();
+        Fragment searchFragment = new SearchFragment();
+        Fragment mapFragment = new MapFragment();
+        Fragment settingsFragment = new SettingsFragment();
+        setCurrentFragment(homeFragment, true);
+
+        resetBackgrounds(nvMain);
+        setItemBackground(nvMain, nvMain.getSelectedItemId(), R.drawable.nav_item_selected_background);
+        nvMain.setOnItemSelectedListener(item -> {
+            resetBackgrounds(nvMain);
+            setItemBackground(nvMain, item.getItemId(), R.drawable.nav_item_selected_background);
+            int itemId = item.getItemId();
+            if (itemId == R.id.home)
+                getSupportFragmentManager().popBackStack();
+            else if (itemId == R.id.search)
+                setCurrentFragment(searchFragment, false);
+            else if (itemId == R.id.map)
+                setCurrentFragment(mapFragment, false);
+            else if (itemId == R.id.settings)
+                setCurrentFragment(settingsFragment, false);
+            return true;
         });
-
     }
 
     private void initComponents() {
@@ -134,12 +161,72 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void showLoadingScreen() {
+        setContentView(R.layout.loading_screen);
+    }
+
+    private void hideLoadingScreen() {
+        setContentView(R.layout.activity_main);
+        initComponents();
+    }
+
 
     public void scanForEvents() {
-        getRecommendedCategories();
-        getAllLocations();
-        getAllRecommendedEvents();
-        getSavedEvents();
+        showLoadingScreen();
+
+        MutableLiveData<Boolean> categoriesFetched = new MutableLiveData<>(false);
+        MutableLiveData<Boolean> locationsFetched = new MutableLiveData<>(false);
+        MutableLiveData<Boolean> eventsFetched = new MutableLiveData<>(false);
+
+        apiViewModel.getCategoriesLiveData().observe(this, categories -> {
+            if (categories != null) {
+                recommendedCategories = categories;
+                categoriesFetched.setValue(true);
+            }
+        });
+
+        apiViewModel.getLocationsLiveData().observe(this, locations -> {
+            if (locations != null) {
+                allLocations = locations;
+                locationsFetched.setValue(true);
+            }
+        });
+
+        apiViewModel.getEventsLiveData().observe(this, events -> {
+            if (events != null) {
+                allEvents = events;
+                eventsFetched.setValue(true);
+            }
+        });
+
+        // Fetch categories and locations in parallel
+        apiViewModel.fetchCategories();
+        apiViewModel.fetchLocations(userLocation.latitude, userLocation.longitude, radius);
+
+        // Observe locationsFetched to fetch events after locations are fetched
+        locationsFetched.observe(this, fetched -> {
+            if (fetched) {
+                List<Integer> locationIds = allLocations.stream().map(Location::getId).collect(Collectors.toList());
+                apiViewModel.fetchEvents(locationIds);
+            }
+        });
+
+        // Observe all fetch statuses to continue the flow after all data is fetched
+        MediatorLiveData<Boolean> allDataFetched = new MediatorLiveData<>();
+        allDataFetched.addSource(categoriesFetched, value -> allDataFetched.setValue(
+                categoriesFetched.getValue() && locationsFetched.getValue() && eventsFetched.getValue()));
+        allDataFetched.addSource(locationsFetched, value -> allDataFetched.setValue(
+                categoriesFetched.getValue() && locationsFetched.getValue() && eventsFetched.getValue()));
+        allDataFetched.addSource(eventsFetched, value -> allDataFetched.setValue(
+                categoriesFetched.getValue() && locationsFetched.getValue() && eventsFetched.getValue()));
+
+        allDataFetched.observe(this, allFetched -> {
+            if (allFetched) {
+                hideLoadingScreen();
+                getSavedEvents();
+                onDataFetched();
+            }
+        });
     }
 
     private void setItemBackground(BottomNavigationView bnv, int itemId, int backgroundId) {
@@ -162,48 +249,6 @@ public class MainActivity extends AppCompatActivity {
         transaction.commit();
     }
 
-    public void getAllRecommendedEvents() {
-        allEvents.clear();
-        recommendedIndices.clear();
-        for (int i = 0; i < 100; i++) {
-
-            Category[] categories = Category.values();
-            Random random = new Random();
-            int nrCategories = 1;
-            int startMonth = 1, startDay = 1;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-                nrCategories = random.nextInt(1, 5);
-                startMonth = random.nextInt(3, 8);
-                startDay = random.nextInt(1, 30);
-            }
-            List<Category> chosenCategories = new ArrayList<>(nrCategories);
-            for (int j = 0; j < nrCategories; j++) {
-                Category category = categories[random.nextInt(categories.length)];
-                if (!chosenCategories.contains(category))
-                    chosenCategories.add(category);
-            }
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Event event = new Event(i, "Event " + (i + 1), LOREM_IPSUM,
-                        allLocations.get(random.nextInt(allLocations.size())), chosenCategories,
-                        List.of("https://picsum.photos/1920/1080", "https://picsum.photos/1920/1080"),
-                        "https://www.google.com", LocalDateTime.of(2025, startMonth, startDay, 12, 0),
-                        LocalDateTime.of(2025, 8, 12, 12, 0));
-                allEvents.add(event);
-                recommendedIndices.put(event.getId(), i);
-            }
-        }
-    }
-
-    public void getAllLocations() {
-        allLocations.clear();
-        for (int i = 0; i < 10; i++) {
-            double[] randomCoordinates;
-            randomCoordinates = generateRandomCoordinate(userLocation.latitude, userLocation.longitude, radius / 1000);
-
-            allLocations.add(new Location(i, "Location " + (i + 1), randomCoordinates[0], randomCoordinates[1]));
-        }
-    }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions,
@@ -218,19 +263,6 @@ public class MainActivity extends AppCompatActivity {
                 // Permission denied, show a message or handle the case
                 System.exit(0);
             }
-        }
-    }
-
-    public void getRecommendedCategories() {
-        recommendedCategories.clear();
-        recommendedCategories = new ArrayList<>(4);
-        Category[] categories = Category.values();
-        Random random = new Random();
-        for (int j = 0; j < 4; j++) {
-            Category category = categories[random.nextInt(categories.length)];
-            if (!recommendedCategories.contains(category))
-                recommendedCategories.add(category);
-            else j--;
         }
     }
 

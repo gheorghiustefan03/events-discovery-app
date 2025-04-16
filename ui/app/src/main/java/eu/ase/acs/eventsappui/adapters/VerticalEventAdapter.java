@@ -32,6 +32,6 @@ public class VerticalEventAdapter extends EventAdapter {
         super.onBindViewHolder(holder, position);
         Event event = getEventList().get(position);
         Context context = getContext();
-        Glide.with(context).load(event.getImageUrls().get(0)).override(120, 143).centerCrop().into(holder.ivHeader);
+        Glide.with(context).load(event.getImageUrls().get(0).replace('\\', '/').replace("https://localhost:7295", "http://10.0.2.2:5073")).override(120, 143).centerCrop().into(holder.ivHeader);
     }
 }

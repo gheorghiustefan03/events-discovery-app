@@ -14,18 +14,8 @@ namespace events_app_api.Models
         public string? Description { get; set; }
         public int LocationId { get; set; }
         public Location? Location { get; set; }
-        private List<Category> _categories;
-        public List<Category> Categories
-        {
-            get => new List<Category>(_categories);
-            set => _categories = value != null ? new List<Category>(value) : new List<Category>();
-        }
-        private List<string> _imageUrls = new List<string>();
-        public List<string> ImageUrls
-        {
-            get => new List<string>(_imageUrls);
-            set => _imageUrls = value != null ? new List<string>(value) : new List<string>();
-        }
+        public List<Category> Categories {  get; set; }
+        public List<string> ImageUrls { get; set; }
         public string? Link { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
@@ -43,8 +33,8 @@ namespace events_app_api.Models
         }
         public Event()
         {
-            Categories = null;
-            ImageUrls = null;
+            Categories = new List<Category>();
+            ImageUrls = new List<string>();
         }
     }
 }

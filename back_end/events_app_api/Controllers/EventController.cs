@@ -75,7 +75,10 @@ namespace events_app_api.Controllers
                     if (@event.Description != null)
                         ev.Description = @event.Description;
                     if (@event.LocationId != default)
+                    {
                         ev.LocationId = @event.LocationId;
+                        await _context.Entry(ev).Reference(e => e.Location).LoadAsync();
+                    }
                     if (@event.Categories != null)
                         ev.Categories = @event.Categories;
                     if (@event.ImageUrls != null)
@@ -119,6 +122,7 @@ namespace events_app_api.Controllers
                 Event? ev = await _context.Events.FindAsync(id);
                 if (ev == null) return NotFound();
 
+                ev.Location.Events.Remove(ev);
                 _context.Events.Remove(ev);
                 await _context.SaveChangesAsync();
                 return Ok("Delete success");

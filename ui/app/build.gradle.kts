@@ -20,6 +20,7 @@ android {
         }
 
         resValue("string", "MAPS_API_KEY", localProperties.getProperty("MAPS_API_KEY"))
+        resValue("string", "LOCALHOST", localProperties.getProperty("LOCALHOST"))
 
         applicationId = "eu.ase.acs.eventsappui"
         minSdk = 24
@@ -63,6 +64,8 @@ dependencies {
     implementation(libs.gms.play.services.location)
     implementation(libs.android.maps.utils)
     implementation(libs.threetenabp)
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
 }
 java {
     toolchain {
