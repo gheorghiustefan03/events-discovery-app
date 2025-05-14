@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SearchView;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,10 @@ public class SearchFragment extends Fragment {
         initComponents(view);
         mainActivity = (MainActivity) requireActivity();
         svSearch.clearFocus();
+        int searchTextViewId = svSearch.getContext().getResources().getIdentifier("android:id/search_src_text", null, null);
+        TextView searchTextView = svSearch.findViewById(searchTextViewId);
+        if(searchTextView != null)
+            searchTextView.setTextColor(getResources().getColor(R.color.white));
         adapter = new VerticalEventAdapter(filteredList, requireContext());
         adapter.setOnClickListener((position, event) -> {
             Intent intent = new Intent(requireActivity(), EventActivity.class);

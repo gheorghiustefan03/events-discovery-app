@@ -47,7 +47,6 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
                 startDate.getMonthValue(),
                 startDate.getDayOfMonth(),
                 startDate.getYear() - 2000));
-        holder.setStartDate(dateToDisplay);
         Glide.with(context).load(event.getImageUrls().get(0).replace('\\', '/').replace("https://localhost:7295", "http://10.0.2.2:5073")).override(80, 143).centerCrop().into(holder.ivHeader);
         holder.itemView.setOnClickListener(view -> {
             if (onClickListener != null) {
@@ -88,7 +87,6 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             tvName = itemView.findViewById(R.id.tv_name);
             tvLocation = itemView.findViewById(R.id.tv_location);
             ivHeader = itemView.findViewById(R.id.iv_header);
-            tvStartDate = itemView.findViewById(R.id.tv_start_date);
         }
 
         public void setName(String name) {
@@ -99,8 +97,5 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             tvLocation.setText("@" + location);
         }
 
-        public void setStartDate(String startDate) {
-            tvStartDate.setText(startDate);
-        }
     }
 }

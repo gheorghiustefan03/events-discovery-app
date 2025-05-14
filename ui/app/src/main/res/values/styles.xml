@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="SearchViewStyle" parent="ThemeOverlay.MaterialComponents.Light">
+        <item name="android:textColor">@color/white</item>
         <item name="android:textColorHint">@color/white</item>
+        <item name="android:fontFamily">@font/inter</item>
     </style>
+
 </resources>

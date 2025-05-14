@@ -1,6 +1,7 @@
 package eu.ase.acs.eventsappui.adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +32,10 @@ public class VerticalEventAdapter extends EventAdapter {
     public void onBindViewHolder(@NonNull EventAdapter.EventViewHolder holder, int position) {
         super.onBindViewHolder(holder, position);
         Event event = getEventList().get(position);
+        holder.itemView.post(() -> {
+            holder.tvName.setMaxWidth(holder.itemView.getWidth() - 60);
+            Log.e("VerticalEventAdapter", "Width: " + holder.itemView.getWidth());
+        });
         Context context = getContext();
         Glide.with(context).load(event.getImageUrls().get(0).replace('\\', '/').replace("https://localhost:7295", "http://10.0.2.2:5073")).override(120, 143).centerCrop().into(holder.ivHeader);
     }

@@ -96,7 +96,7 @@ public class EventListFragment extends Fragment {
             @Override
             public void getItemOffsets(@NonNull Rect outRect, @NonNull View view, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
                 super.getItemOffsets(outRect, view, parent, state);
-                outRect.top = 5;
+                outRect.top = 10;
             }
         };
         rvAllEvents.addItemDecoration(divider);

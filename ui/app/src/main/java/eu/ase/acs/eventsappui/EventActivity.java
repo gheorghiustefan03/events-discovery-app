@@ -81,14 +81,14 @@ public class EventActivity extends AppCompatActivity {
                 startDate.getDayOfMonth(),
                 startDate.getYear() - 2000,
                 startDate.getHour(),
-                startDate.getMinute()));
+                startDate.getMinute()) + " ");
 
         tvEndTime.setText(String.format(Locale.ENGLISH, "%02d.%02d.%02d, %02d:%02d",
                 endDate.getMonth().getValue(),
                 endDate.getDayOfMonth(),
                 endDate.getYear() - 2000,
                 endDate.getHour(),
-                endDate.getMinute()));
+                endDate.getMinute()) + " ");
 
         fabBack.setOnClickListener(view -> {
             finish();
