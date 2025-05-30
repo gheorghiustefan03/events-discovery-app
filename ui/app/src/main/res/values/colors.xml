@@ -3,6 +3,5 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="navbar_background">#3f3e3e</color>
-    <color name="card_backgrond">#3f3e3e</color>
     <color name="background">#2B2A2A</color>
 </resources>

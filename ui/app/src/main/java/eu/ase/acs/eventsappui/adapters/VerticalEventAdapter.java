@@ -33,10 +33,11 @@ public class VerticalEventAdapter extends EventAdapter {
         super.onBindViewHolder(holder, position);
         Event event = getEventList().get(position);
         holder.itemView.post(() -> {
-            holder.tvName.setMaxWidth(holder.itemView.getWidth() - 60);
-            Log.e("VerticalEventAdapter", "Width: " + holder.itemView.getWidth());
+            int width = holder.itemView.getWidth();
+            holder.tvName.setMaxWidth(width - 60);
+            Context context = getContext();
+            Glide.with(context).load(event.getImageUrls().get(0).replace('\\', '/').replace("https://localhost:7295", "http://10.0.2.2:5073")).into(holder.ivHeader);
         });
-        Context context = getContext();
-        Glide.with(context).load(event.getImageUrls().get(0).replace('\\', '/').replace("https://localhost:7295", "http://10.0.2.2:5073")).override(120, 143).centerCrop().into(holder.ivHeader);
+
     }
 }

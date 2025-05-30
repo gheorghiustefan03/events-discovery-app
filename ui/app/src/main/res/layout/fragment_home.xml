@@ -17,7 +17,7 @@
         android:clickable="true"
         android:foregroundTint="@color/black"
         android:src="@drawable/arrow_down_icon"
-        app:backgroundTint="@color/card_backgrond"
+        app:backgroundTint="@color/navbar_background"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:tint="@color/black" />

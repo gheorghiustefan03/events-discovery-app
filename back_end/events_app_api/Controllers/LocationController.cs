@@ -4,11 +4,14 @@ using events_app_api.Data;
 using events_app_api.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using events_app_api.Filters;
+using Microsoft.AspNetCore.Authorization;
 
 namespace events_app_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [ServiceFilter(typeof (LocationAddFilter))]
     public class LocationController : ControllerBase
     {
         private readonly ApiContext _context;
@@ -17,6 +20,7 @@ namespace events_app_api.Controllers
             _context = context;
         }
         [HttpPost]
+        [Authorize(Policy ="RequireUserEmail")]
         public async Task<IActionResult> CreateLocation(Location @location)
         {
             try
@@ -31,6 +35,7 @@ namespace events_app_api.Controllers
             }
         }
         [HttpPut("{id}")]
+        [Authorize(Policy = "RequireUserEmail")]
         public async Task <IActionResult> UpdateLocation (int id, Location @location)
         {
             try
@@ -38,7 +43,7 @@ namespace events_app_api.Controllers
                 Location? _location = await _context.Locations.FindAsync(id);
                 if (_location != null)
                 {
-                    if(@location.Name != null)
+                    if(!string.IsNullOrEmpty(@location.Name))
                         _location.Name = @location.Name;
                     if(@location.Latitude != default)
                         _location.Latitude = @location.Latitude;
@@ -71,6 +76,7 @@ namespace events_app_api.Controllers
             }
         }
         [HttpDelete("{id}")]
+        [Authorize(Policy = "RequireUserEmail")]
         public async Task<IActionResult> deleteLocation(int id)
         {
             try

@@ -10,8 +10,8 @@ namespace events_app_api.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         public string? Name { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
         public List<Event> Events { get; set; }
         public Location(Location location)
         {
@@ -60,9 +60,9 @@ namespace events_app_api.Models
             // Check if the distance is within the specified radius
             return distanceKm <= (radius / 1000);
         }
-        private static double ToRadians(double degrees)
+        private static double ToRadians(double? degrees)
         {
-            return degrees * Math.PI / 180.0;
+            return degrees.Value * Math.PI / 180.0;
         }
     }
 }

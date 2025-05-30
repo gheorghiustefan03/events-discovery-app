@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="250dp"
     android:layout_margin="8dp"
-    app:cardBackgroundColor="@color/card_backgrond"
+    app:cardBackgroundColor="@color/navbar_background"
     app:cardCornerRadius="12dp"
     app:cardElevation="4dp"
     app:cardPreventCornerOverlap="true"

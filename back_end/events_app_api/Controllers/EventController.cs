@@ -6,13 +6,53 @@ using System.ComponentModel;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.IO;
+using events_app_api.Filters;
+using static System.Net.WebRequestMethods;
+using Microsoft.AspNetCore.Authorization;
 
 namespace events_app_api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [ServiceFilter(typeof(EventAddFilter))]
     public class EventController : ControllerBase
     {
+        //creates images directory if it doesn't already exist
+        //deletes all images in specific event directory
+        //adds new images in folder
+        //replaces imageUrls with correct references
+        private async Task syncImages(Event @event, List<IFormFile> files)
+        {
+            string eventImagesFolder = Path.Combine(_env.WebRootPath, "images");
+            if (!Directory.Exists(eventImagesFolder)) Directory.CreateDirectory(eventImagesFolder);
+
+            string path = Path.Combine(eventImagesFolder, @event.Id.ToString());
+            if (Directory.Exists(path))
+            {
+                foreach (string existingFile in Directory.GetFiles(path))
+                {
+                    System.IO.File.Delete(existingFile);
+                }
+                foreach (string subDirectory in Directory.GetDirectories(path))
+                {
+                    Directory.Delete(subDirectory, true);
+                }
+
+            }
+            else Directory.CreateDirectory(path);
+            List<string> imageUrls = new List<string>();
+            for (int i = 0; i < files.Count(); i++)
+            {
+                string filename = Path.Combine(path, i.ToString()) + Path.GetExtension(Path.GetFileName(files[i].FileName));
+                using (var stream = new FileStream(filename, FileMode.Create))
+                {
+                    await files[i].CopyToAsync(stream);
+                }
+                imageUrls.Add(Path.Join("https://localhost:7295", "images", @event.Id.ToString(), i.ToString()) + Path.GetExtension(Path.GetFileName(files[i].FileName))
+                    + $"?v={DateTime.UtcNow.Ticks}");
+            }
+            @event.ImageUrls = imageUrls;
+        }
         private readonly ApiContext _context;
         private readonly IWebHostEnvironment _env;
         public EventController(ApiContext context, IWebHostEnvironment env)
@@ -21,39 +61,15 @@ namespace events_app_api.Controllers
             _env = env;
         }
         [HttpPost]
+        [Authorize(Policy = "RequireUserEmail")]
         public async Task<IActionResult> CreateEvent([FromForm]Event @event, [FromForm]List<IFormFile> files)
         {
             try
             {
-                string eventImagesFolder = Path.Combine(_env.WebRootPath, "images");
-                if (!Directory.Exists(eventImagesFolder)) Directory.CreateDirectory(eventImagesFolder);
                 await _context.Events.AddAsync(@event);
-                await _context.SaveChangesAsync();
-                string path = Path.Combine(eventImagesFolder, @event.Id.ToString());
-                if (Directory.Exists(path))
-                {
-                    foreach(string existingFile in Directory.GetFiles(path))
-                    {
-                       System.IO.File.Delete(existingFile);
-                    }
-                    foreach (string subDirectory in Directory.GetDirectories(path))
-                    {
-                        Directory.Delete(subDirectory, true);
-                    }
 
-                }
-                else Directory.CreateDirectory(path);
-                List<string> imageUrls = new List<string>();
-                for (int i = 0; i < files.Count(); i++)
-                {
-                    string filename = Path.Combine(path, i.ToString()) + Path.GetExtension(Path.GetFileName(files[i].FileName));
-                    using (var stream = new FileStream(filename, FileMode.Create))
-                    {
-                        await files[i].CopyToAsync(stream);
-                    }
-                    imageUrls.Add(Path.Join("https://localhost:7295", "images" ,@event.Id.ToString(), i.ToString()) + Path.GetExtension(Path.GetFileName(files[i].FileName)));
-                }
-                @event.ImageUrls = imageUrls;
+                await syncImages(@event, files);
+
                 await _context.SaveChangesAsync();
 
                 return Ok(@event);
@@ -63,7 +79,8 @@ namespace events_app_api.Controllers
             }
         }
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateEvent(int id, Event @event)
+        [Authorize(Policy = "RequireUserEmail")]
+        public async Task<IActionResult> UpdateEvent(int id, [FromForm] Event @event, [FromForm] List<IFormFile> files)
         {
             try
             {
@@ -81,8 +98,6 @@ namespace events_app_api.Controllers
                     }
                     if (@event.Categories != null)
                         ev.Categories = @event.Categories;
-                    if (@event.ImageUrls != null)
-                        ev.ImageUrls = @event.ImageUrls;
                     if (@event.Link != null)
                         ev.Link = @event.Link;
                     if (@event.StartDate != default)
@@ -90,7 +105,13 @@ namespace events_app_api.Controllers
                     if (@event.EndDate != default)
                         ev.EndDate = @event.EndDate;
 
+                    if (files != null && files.Count > 0)
+                    {
+                        await syncImages(ev, files);
+                        //await _context.SaveChangesAsync();
+                    }
                     await _context.SaveChangesAsync();
+
                     return Ok(ev);
                 }
                 else return NotFound("Event not found");
@@ -115,6 +136,7 @@ namespace events_app_api.Controllers
             }
         }
         [HttpDelete("{id}")]
+        [Authorize(Policy = "RequireUserEmail")]
         public async Task<IActionResult> deleteEvent(int id)
         {
             try
