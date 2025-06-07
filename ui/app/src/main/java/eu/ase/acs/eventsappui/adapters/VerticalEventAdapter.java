@@ -36,7 +36,7 @@ public class VerticalEventAdapter extends EventAdapter {
             int width = holder.itemView.getWidth();
             holder.tvName.setMaxWidth(width - 60);
             Context context = getContext();
-            Glide.with(context).load(event.getImageUrls().get(0).replace('\\', '/').replace("https://localhost:7295", "http://10.0.2.2:5073")).into(holder.ivHeader);
+            Glide.with(context).load(event.getImageUrls().get(0).replace('\\', '/').replace("http://localhost:5073", "http://10.0.2.2:5073")).into(holder.ivHeader);
         });
 
     }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
+using System.Text.Json;
 
 namespace events_app_api.Filters
 {
@@ -92,13 +93,14 @@ namespace events_app_api.Filters
                 }
             }
         }
-        private void validateFiles(IFormFileCollection? files,  StringBuilder errorMessage)
+        private void validateFiles(IFormFileCollection? files,  StringBuilder errorMessage, List<ImageOrder> existingImageOrder)
         {
             if(files == null || files.Count == 0)
             {
-                errorMessage.AppendLine("No files provided");
+                if(existingImageOrder.Count() == 0)
+                    errorMessage.AppendLine("No images provided");
             }
-            foreach (var file in files)
+            else foreach (var file in files)
             {
                 string extension = Path.GetExtension(file.FileName);
                 if (extension != ".jpg" && extension != ".jpeg" && extension != ".png" && extension != ".webp")
@@ -148,6 +150,7 @@ namespace events_app_api.Filters
                 }
             }
         }
+        record ImageOrder(int id, int index);
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
             StringBuilder errorMessage = new StringBuilder();
@@ -174,7 +177,7 @@ namespace events_app_api.Filters
                 //integers between 1 and 13, non empty array
 
                 var files = form.Files;
-                validateFiles(files, errorMessage);
+                validateFiles(files, errorMessage, new List<ImageOrder>());
                 //non empty, less than 5mb
                 //extension != ".jpg" && extension != ".jpeg" && extension != ".png" && extension != ".webp"
 
@@ -219,13 +222,16 @@ namespace events_app_api.Filters
                     //integers between 1 and 13, non empty array
                 }
 
-                if (form.Files != null && form.Files.Count > 0)
-                {
+                form.TryGetValue("existingImageOrder", out var existingImageOrderJson);
+                    var existingImageOrder = new List<ImageOrder>();
+                    if (!string.IsNullOrWhiteSpace(existingImageOrderJson))
+                    {
+                        existingImageOrder = JsonSerializer.Deserialize<List<ImageOrder>>(existingImageOrderJson);
+                    }
                     var files = form.Files;
-                    validateFiles(files, errorMessage);
+                    validateFiles(files, errorMessage, existingImageOrder);
                     //non empty, less than 5mb
                     //extension != ".jpg" && extension != ".jpeg" && extension != ".png" && extension != ".webp"
-                }
 
                 if (form.ContainsKey("Link"))
                 {

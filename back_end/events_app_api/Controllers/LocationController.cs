@@ -20,7 +20,7 @@ namespace events_app_api.Controllers
             _context = context;
         }
         [HttpPost]
-        [Authorize(Policy ="RequireUserEmail")]
+        [Authorize]
         public async Task<IActionResult> CreateLocation(Location @location)
         {
             try
@@ -35,7 +35,7 @@ namespace events_app_api.Controllers
             }
         }
         [HttpPut("{id}")]
-        [Authorize(Policy = "RequireUserEmail")]
+        [Authorize]
         public async Task <IActionResult> UpdateLocation (int id, Location @location)
         {
             try
@@ -76,7 +76,7 @@ namespace events_app_api.Controllers
             }
         }
         [HttpDelete("{id}")]
-        [Authorize(Policy = "RequireUserEmail")]
+        [Authorize]
         public async Task<IActionResult> deleteLocation(int id)
         {
             try

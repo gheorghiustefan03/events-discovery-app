@@ -47,7 +47,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
                 startDate.getMonthValue(),
                 startDate.getDayOfMonth(),
                 startDate.getYear() - 2000));
-        Glide.with(context).load(event.getImageUrls().get(0).replace('\\', '/').replace("https://localhost:7295", "http://10.0.2.2:5073")).into(holder.ivHeader);
+        Glide.with(context).load(event.getImageUrls().get(0).replace('\\', '/').replace("http://localhost:5073", "http://10.0.2.2:5073")).into(holder.ivHeader);
         holder.itemView.setOnClickListener(view -> {
             if (onClickListener != null) {
                 onClickListener.onClick(holder.getAdapterPosition(), event);

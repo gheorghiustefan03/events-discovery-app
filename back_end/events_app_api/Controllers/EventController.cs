@@ -9,6 +9,9 @@ using System.IO;
 using events_app_api.Filters;
 using static System.Net.WebRequestMethods;
 using Microsoft.AspNetCore.Authorization;
+using System.Text.Json;
+using System.Diagnostics.Eventing.Reader;
+using Microsoft.IdentityModel.Tokens;
 
 namespace events_app_api.Controllers
 {
@@ -21,8 +24,13 @@ namespace events_app_api.Controllers
         //deletes all images in specific event directory
         //adds new images in folder
         //replaces imageUrls with correct references
-        private async Task syncImages(Event @event, List<IFormFile> files)
+        private async Task syncImages(Event @event, List<IFormFile> files, string? existingImagesOrderJson = null)
         {
+            var existingImageOrder = new List<ImageOrder>();
+            if (!string.IsNullOrWhiteSpace(existingImagesOrderJson))
+            {
+                existingImageOrder = JsonSerializer.Deserialize<List<ImageOrder>>(existingImagesOrderJson);
+            }
             string eventImagesFolder = Path.Combine(_env.WebRootPath, "images");
             if (!Directory.Exists(eventImagesFolder)) Directory.CreateDirectory(eventImagesFolder);
 
@@ -31,7 +39,22 @@ namespace events_app_api.Controllers
             {
                 foreach (string existingFile in Directory.GetFiles(path))
                 {
-                    System.IO.File.Delete(existingFile);
+                    string fileName = Path.GetFileNameWithoutExtension(existingFile);
+                    if (!existingImageOrder.Exists(io => io.id == int.Parse(fileName)))
+                        System.IO.File.Delete(existingFile);
+                    else
+                    {
+                        string newPath = Path.Combine(path, "temp_" + existingImageOrder.Find(io => io.id == int.Parse(fileName)).index.ToString()) + Path.GetExtension(existingFile);
+                        System.IO.File.Move(existingFile, newPath);
+                    }
+                }
+                foreach(string existingFile in Directory.GetFiles(path))
+                {
+                    string fileName = Path.GetFileNameWithoutExtension(existingFile);
+                    if (fileName.Contains("temp_"))
+                    {
+                        System.IO.File.Move(existingFile, Path.Combine(path, fileName.Replace("temp_", "")) + Path.GetExtension(existingFile));
+                    }
                 }
                 foreach (string subDirectory in Directory.GetDirectories(path))
                 {
@@ -41,14 +64,24 @@ namespace events_app_api.Controllers
             }
             else Directory.CreateDirectory(path);
             List<string> imageUrls = new List<string>();
-            for (int i = 0; i < files.Count(); i++)
+            int skipped = 0;
+            for (int i = 0; i < files.Count() + existingImageOrder.Count(); i++)
             {
-                string filename = Path.Combine(path, i.ToString()) + Path.GetExtension(Path.GetFileName(files[i].FileName));
+                if (existingImageOrder.Any(io => io.index == i))
+                {
+                    string existingFileExtension = Path.GetExtension(Path.GetFileName(@event.ImageUrls.First(iu => Path.GetFileName(iu).Contains(i.ToString()))));
+                    imageUrls.Add(Path.Join("http://localhost:5073", "images", @event.Id.ToString(), i.ToString()) + existingFileExtension
+    + $"?v={DateTime.UtcNow.Ticks}");
+                    skipped += 1;
+                    continue;
+                }
+
+                string filename = Path.Combine(path, i.ToString()) + Path.GetExtension(Path.GetFileName(files[i - skipped].FileName));
                 using (var stream = new FileStream(filename, FileMode.Create))
                 {
-                    await files[i].CopyToAsync(stream);
+                    await files[i - skipped].CopyToAsync(stream);
                 }
-                imageUrls.Add(Path.Join("https://localhost:7295", "images", @event.Id.ToString(), i.ToString()) + Path.GetExtension(Path.GetFileName(files[i].FileName))
+                imageUrls.Add(Path.Join("http://localhost:5073", "images", @event.Id.ToString(), i.ToString()) + Path.GetExtension(Path.GetFileName(files[i - skipped].FileName))
                     + $"?v={DateTime.UtcNow.Ticks}");
             }
             @event.ImageUrls = imageUrls;
@@ -61,7 +94,7 @@ namespace events_app_api.Controllers
             _env = env;
         }
         [HttpPost]
-        [Authorize(Policy = "RequireUserEmail")]
+        [Authorize]
         public async Task<IActionResult> CreateEvent([FromForm]Event @event, [FromForm]List<IFormFile> files)
         {
             try
@@ -78,12 +111,14 @@ namespace events_app_api.Controllers
                 return Problem("Server error");
             }
         }
+        record ImageOrder(int id, int index);
         [HttpPut("{id}")]
-        [Authorize(Policy = "RequireUserEmail")]
-        public async Task<IActionResult> UpdateEvent(int id, [FromForm] Event @event, [FromForm] List<IFormFile> files)
+        [Authorize]
+        public async Task<IActionResult> UpdateEvent(int id, [FromForm] Event @event, [FromForm] List<IFormFile> files, [FromForm(Name = "existingImageOrder")] string existingImageOrderJson)
         {
             try
             {
+
                 Event? ev = await _context.Events.FindAsync(id);
                 if (ev != null)
                 {
@@ -105,9 +140,9 @@ namespace events_app_api.Controllers
                     if (@event.EndDate != default)
                         ev.EndDate = @event.EndDate;
 
-                    if (files != null && files.Count > 0)
+                    if ((files != null && files.Count > 0) || !existingImageOrderJson.IsNullOrEmpty())
                     {
-                        await syncImages(ev, files);
+                        await syncImages(ev, files, existingImageOrderJson);
                         //await _context.SaveChangesAsync();
                     }
                     await _context.SaveChangesAsync();
@@ -136,7 +171,7 @@ namespace events_app_api.Controllers
             }
         }
         [HttpDelete("{id}")]
-        [Authorize(Policy = "RequireUserEmail")]
+        [Authorize]
         public async Task<IActionResult> deleteEvent(int id)
         {
             try
@@ -144,7 +179,7 @@ namespace events_app_api.Controllers
                 Event? ev = await _context.Events.FindAsync(id);
                 if (ev == null) return NotFound();
 
-                ev.Location.Events.Remove(ev);
+                //ev.Location.Events.Remove(ev);
                 _context.Events.Remove(ev);
                 await _context.SaveChangesAsync();
                 return Ok("Delete success");

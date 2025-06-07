@@ -1,0 +1,5 @@
+const CONFIG = {
+  GOOGLE_CLIENT_ID: "clientid",
+  ALLOWED_EMAIL: "email.example"
+};
+
