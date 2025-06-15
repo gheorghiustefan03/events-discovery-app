@@ -10,6 +10,7 @@ namespace events_app_api.Data
         private readonly IWebHostEnvironment _env;
         public DbSet<Event> Events { get; set; }
         public DbSet<Location> Locations { get; set; }
+        public DbSet<EventInteraction> EventInteractions { get; set; }
         public ApiContext(DbContextOptions<ApiContext> options, IWebHostEnvironment env) : base(options)
         {
             _env = env;
@@ -22,6 +23,20 @@ namespace events_app_api.Data
                 .WithMany(l => l.Events)
                 .HasForeignKey(e => e.LocationId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<EventInteraction>()
+                .HasOne(ei => ei.Event)
+                .WithMany(e => e.EventInteractions)
+                .HasForeignKey(ei => ei.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<EventInteraction>()
+                .HasKey(e => new { e.DeviceId, e.Timestamp });
+            modelBuilder.Entity<EventInteraction>()
+                .Property(e => e.InteractionType)
+                .IsRequired();
+            modelBuilder.Entity<EventInteraction>()
+                .Property(e => e.EventId)
+                .IsRequired();
         }
         public async override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {

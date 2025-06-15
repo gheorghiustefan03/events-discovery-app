@@ -1,30 +1,32 @@
 package eu.ase.acs.eventsappui.api;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.util.Log;
 
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.google.android.gms.common.api.Api;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
+
 import org.threeten.bp.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import eu.ase.acs.eventsappui.MainActivity;
 import eu.ase.acs.eventsappui.entities.Category;
 import eu.ase.acs.eventsappui.entities.Event;
+import eu.ase.acs.eventsappui.entities.EventInteraction;
 import eu.ase.acs.eventsappui.entities.Location;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -36,10 +38,12 @@ public class ApiViewModel extends ViewModel {
         private final List<Category> categories;
         private final List<Event> events;
         private final List<Location> locations;
-        public DataBundle(List<Category> categories, List<Event> events, List<Location> locations) {
+        private final Map<Integer, Integer> indices;
+        public DataBundle(List<Category> categories, List<Event> events, List<Location> locations, Map<Integer, Integer> indices) {
             this.categories = categories;
             this.events = events;
             this.locations = locations;
+            this.indices = indices;
         }
         public List<Category> getCategories() {
             return categories;
@@ -50,16 +54,20 @@ public class ApiViewModel extends ViewModel {
         public List<Location> getLocations() {
             return locations;
         }
+        public Map<Integer, Integer> getIndices() {
+            return indices;
+        }
     }
     private ApiService apiService;
     private MutableLiveData<List<Category>> categoriesLiveData = new MutableLiveData<>();
     private MutableLiveData<List<Event>> eventsLiveData = new MutableLiveData<>();
     private MutableLiveData<List<Location>> locationsLiveData = new MutableLiveData<>();
     private MutableLiveData<DataBundle> combinedLiveData = new MediatorLiveData<>();
-    private MainActivity mainActivity;
-    public ApiViewModel(ApiService apiService, MainActivity mainActivity) {
+    private MutableLiveData<Map<Integer, Integer>> indicesLiveData = new MutableLiveData<>();
+    private Activity activity;
+    public ApiViewModel(ApiService apiService, Activity activity) {
         this.apiService = apiService;
-        this.mainActivity = mainActivity;
+        this.activity = activity;
     }
     public MutableLiveData<List<Category>> getCategoriesLiveData() {
         return categoriesLiveData;
@@ -70,17 +78,44 @@ public class ApiViewModel extends ViewModel {
     public MutableLiveData<List<Location>> getLocationsLiveData() {
         return locationsLiveData;
     }
+    public MutableLiveData<Map<Integer, Integer>> getIndicesLiveData() {
+        return indicesLiveData;
+    }
     public MutableLiveData<DataBundle> getCombinedLiveData() {
         return combinedLiveData;
     }
     public void combineData(){
-        if(categoriesLiveData.getValue() != null && eventsLiveData.getValue() != null && locationsLiveData.getValue() != null) {
-            DataBundle dataBundle = new DataBundle(categoriesLiveData.getValue(), eventsLiveData.getValue(), locationsLiveData.getValue());
+        if(categoriesLiveData.getValue() != null && eventsLiveData.getValue() != null && locationsLiveData.getValue() != null && indicesLiveData != null) {
+            DataBundle dataBundle = new DataBundle(categoriesLiveData.getValue(), eventsLiveData.getValue(), locationsLiveData.getValue(), indicesLiveData.getValue());
             combinedLiveData.postValue(dataBundle);
         }
     }
-    public void fetchCategories(){
-        apiService.getCategories().enqueue(new Callback<List<Integer>>() {
+    public void sendEventInteraction(String deviceId, int eventId, String interactionType, LocalDateTime timestamp) {
+        EventInteraction eventInteraction = new EventInteraction(deviceId, eventId, interactionType, timestamp.toString());
+        Gson gson = new Gson();
+        Log.d("API_REQUEST", gson.toJson(eventInteraction));
+        apiService.postEventInteraction(eventInteraction).enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                if (response.isSuccessful()) {
+                    Log.d("API", "Event interaction posted successfully");
+                } else {
+                    Log.e("API", "Failed to post event interaction: " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Log.e("API", "Error posting event interaction", t);
+            }
+        });
+    }
+    public void fetchCategories(String deviceId, List<Integer> eventIds){
+        Map<String, Object> body = new HashMap<>();
+        body.put("deviceId", deviceId);
+        body.put("availableEventIds", eventIds);
+
+        apiService.getCategories(body).enqueue(new Callback<List<Integer>>() {
             @Override
             public void onResponse(Call<List<Integer>> call, Response<List<Integer>> response) {
                 if(response.isSuccessful() && response.body() != null) {
@@ -128,7 +163,7 @@ public class ApiViewModel extends ViewModel {
                             String link = jsonObject.getString("link");
                             @SuppressLint("NewApi") LocalDateTime startDate = LocalDateTime.parse(jsonObject.getString("startDate"));
                             @SuppressLint("NewApi") LocalDateTime endDate = LocalDateTime.parse(jsonObject.getString("endDate"));
-                            Location location = mainActivity.allLocations.stream()
+                            Location location = ((MainActivity)activity).allLocations.stream()
                                     .filter(l -> {
                                         try {
                                             return l.getId() == jsonObject.getInt("locationId");
@@ -141,7 +176,7 @@ public class ApiViewModel extends ViewModel {
                             Event event = new Event(id, name, description, location, categories, imageUrls, link, startDate, endDate);
 
                             events.add(event);
-                            mainActivity.recommendedIndices.put(event.getId(), i);
+                            ((MainActivity)activity).recommendedIndices.put(event.getId(), i);
                         }
                         eventsLiveData.postValue(events);
                     } catch (IOException | JSONException e) {
@@ -176,4 +211,29 @@ public class ApiViewModel extends ViewModel {
             }
         });
     }
+    public void fetchIndices(String deviceId, List<Integer> eventIds) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("deviceId", deviceId);
+        body.put("availableEventIds", eventIds);
+        System.out.println(deviceId);
+        System.out.println(eventIds);
+        apiService.getEventIndices(body).enqueue(new Callback<Map<Integer, Integer>>() {
+            @Override
+            public void onResponse(Call<Map<Integer, Integer>> call, Response<Map<Integer, Integer>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    indicesLiveData.postValue(response.body());
+                    Log.d("API", "Indices fetched successfully: " + response.body());
+                } else {
+                    Log.e("API", "Failed to fetch indices: " + response.message());
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Map<Integer, Integer>> call, Throwable t) {
+                Log.e("API", "Error fetching indices", t);
+            }
+
+        });
+    }
+
 }

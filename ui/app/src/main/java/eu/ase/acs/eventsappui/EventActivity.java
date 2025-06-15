@@ -3,6 +3,7 @@ package eu.ase.acs.eventsappui;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.widget.TextView;
@@ -12,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.smarteist.autoimageslider.SliderView;
@@ -22,7 +24,12 @@ import java.util.List;
 import java.util.Locale;
 
 import eu.ase.acs.eventsappui.adapters.SliderAdapter;
+import eu.ase.acs.eventsappui.api.ApiService;
+import eu.ase.acs.eventsappui.api.ApiViewModel;
+import eu.ase.acs.eventsappui.api.ApiViewModelFactory;
 import eu.ase.acs.eventsappui.entities.Event;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class EventActivity extends AppCompatActivity {
     private Event event;
@@ -32,6 +39,9 @@ public class EventActivity extends AppCompatActivity {
     private int savedArraySize;
     FloatingActionButton fabSave;
     FloatingActionButton fabBack;
+    private ApiService apiService;
+    private ApiViewModel apiViewModel;
+    private String deviceId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,6 +111,8 @@ public class EventActivity extends AppCompatActivity {
                 savedArraySize += 1;
                 savedArrayIndex = savedArraySize - 1;
                 fabSave.setImageResource(R.drawable.saved_icon);
+                apiViewModel.sendEventInteraction(deviceId, event.getId(), "save", LocalDateTime.now());
+
             } else {
                 for (int i = savedArrayIndex; i < savedArraySize - 1; i++) {
                     editor.putInt("saved_events_" + i, sharedPreferences.getInt("saved_events_" + (i + 1), 0));
@@ -110,9 +122,20 @@ public class EventActivity extends AppCompatActivity {
                 savedArrayIndex = -1;
                 savedArraySize -= 1;
                 fabSave.setImageResource(R.drawable.unsaved_icon);
+                apiViewModel.sendEventInteraction(deviceId, event.getId(), "unsave", LocalDateTime.now());
             }
             editor.apply();
         });
+        deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("http://10.0.2.2:5073/api/")  // Base URL
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        apiService = retrofit.create(ApiService.class);
+        ApiViewModelFactory factory = new ApiViewModelFactory(apiService, this);
+        apiViewModel = new ViewModelProvider(this, factory).get(ApiViewModel.class);
+
+        apiViewModel.sendEventInteraction(deviceId, event.getId(), "view", LocalDateTime.now());
     }
 
     private void initComponents() {

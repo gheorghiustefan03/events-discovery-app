@@ -12,9 +12,16 @@ using Microsoft.AspNetCore.Authorization;
 using System.Text.Json;
 using System.Diagnostics.Eventing.Reader;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
+using System.Text;
+using Newtonsoft.Json.Linq;
+using System.Net.Http;
 
 namespace events_app_api.Controllers
 {
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
+    public class SkipEventAddFilterAttribute : Attribute { }
+
     [Route("api/[controller]")]
     [ApiController]
     [ServiceFilter(typeof(EventAddFilter))]
@@ -29,7 +36,7 @@ namespace events_app_api.Controllers
             var existingImageOrder = new List<ImageOrder>();
             if (!string.IsNullOrWhiteSpace(existingImagesOrderJson))
             {
-                existingImageOrder = JsonSerializer.Deserialize<List<ImageOrder>>(existingImagesOrderJson);
+                existingImageOrder = System.Text.Json.JsonSerializer.Deserialize<List<ImageOrder>>(existingImagesOrderJson);
             }
             string eventImagesFolder = Path.Combine(_env.WebRootPath, "images");
             if (!Directory.Exists(eventImagesFolder)) Directory.CreateDirectory(eventImagesFolder);
@@ -48,7 +55,7 @@ namespace events_app_api.Controllers
                         System.IO.File.Move(existingFile, newPath);
                     }
                 }
-                foreach(string existingFile in Directory.GetFiles(path))
+                foreach (string existingFile in Directory.GetFiles(path))
                 {
                     string fileName = Path.GetFileNameWithoutExtension(existingFile);
                     if (fileName.Contains("temp_"))
@@ -88,14 +95,16 @@ namespace events_app_api.Controllers
         }
         private readonly ApiContext _context;
         private readonly IWebHostEnvironment _env;
-        public EventController(ApiContext context, IWebHostEnvironment env)
+        private readonly IHttpClientFactory _httpClientFactory;
+        public EventController(ApiContext context, IWebHostEnvironment env, IHttpClientFactory httpClientFactory)
         {
             _context = context;
             _env = env;
+            _httpClientFactory = httpClientFactory;
         }
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> CreateEvent([FromForm]Event @event, [FromForm]List<IFormFile> files)
+        public async Task<IActionResult> CreateEvent([FromForm] Event @event, [FromForm] List<IFormFile> files)
         {
             try
             {
@@ -106,7 +115,7 @@ namespace events_app_api.Controllers
                 await _context.SaveChangesAsync();
 
                 return Ok(@event);
-            }catch (Exception ex)
+            } catch (Exception ex)
             {
                 return Problem("Server error");
             }
@@ -122,7 +131,7 @@ namespace events_app_api.Controllers
                 Event? ev = await _context.Events.FindAsync(id);
                 if (ev != null)
                 {
-                    if(@event.Name != null)
+                    if (@event.Name != null)
                         ev.Name = @event.Name;
                     if (@event.Description != null)
                         ev.Description = @event.Description;
@@ -150,7 +159,7 @@ namespace events_app_api.Controllers
                     return Ok(ev);
                 }
                 else return NotFound("Event not found");
-            } catch(Exception ex)
+            } catch (Exception ex)
             {
                 return Problem("Server error");
             }
@@ -184,7 +193,7 @@ namespace events_app_api.Controllers
                 await _context.SaveChangesAsync();
                 return Ok("Delete success");
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return Problem("Server error");
             }
@@ -197,19 +206,72 @@ namespace events_app_api.Controllers
             List<int> locationIdsList = new List<int>(locationIds);
             return Ok(events.Where(e => locationIdsList.Find(lId => lId == e.LocationId) != default));
         }
-        [HttpGet("categories")]
-        public async Task<IActionResult> getRandomCategories()
+        [HttpPost("categories")]
+        [SkipEventAddFilter]
+        public async Task<IActionResult> getRecommendedCategories([FromBody] IndexRequest body)
         {
-            var categories = new List<Category>(4);
-            Category[] allCategories = (Category[])Enum.GetValues(typeof(Category));
-            Random rnd = new Random();
-            for(int i = 0; i < 4; i++)
+            var deviceId = body.DeviceId;
+            var eventIds = body.AvailableEventIds;
+
+            var eventsList = await _context.Events
+            .   Where(e => eventIds.Contains(e.Id))
+                .ToListAsync();
+
+            var eventInteractions = await _context.EventInteractions
+                .Where(ei => ei.DeviceId == deviceId && eventIds.Contains(ei.EventId))
+                .ToListAsync();
+
+            var payload = new JObject
             {
-                Category category = allCategories[rnd.Next(0, allCategories.Length)];
-                if (!categories.Contains(category)) categories.Add(category);
-                else i--;
-            }
+                ["availableEvents"] = JArray.FromObject(eventsList),
+                ["eventInteractions"] = JArray.FromObject(eventInteractions)
+            };
+
+            var content = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.PostAsync("http://localhost:5000/categories", content);
+
+            if (!response.IsSuccessStatusCode)
+                return StatusCode((int)response.StatusCode, "Failed to get categories.");
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var categories = JsonConvert.DeserializeObject<List<int>>(responseBody);
+
             return Ok(categories);
         }
+        [HttpPost("indices")]
+        [SkipEventAddFilter]
+        public async Task<IActionResult> GetRecommendedIndices([FromBody] IndexRequest body)
+        {
+            var deviceId = body.DeviceId;
+            var eventIds = body.AvailableEventIds;
+
+            var eventsList = await _context.Events
+                .Where(e => eventIds.Contains(e.Id))
+                .ToListAsync();
+
+            var eventInteractions = await _context.EventInteractions
+                .Where(ei => ei.DeviceId == deviceId && eventIds.Contains(ei.EventId))
+                .ToListAsync();
+
+            var payload = new JObject
+            {
+                ["availableEvents"] = JArray.FromObject(eventsList),
+                ["eventInteractions"] = JArray.FromObject(eventInteractions)
+            };
+
+            var content = new StringContent(payload.ToString(), Encoding.UTF8, "application/json");
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.PostAsync("http://localhost:5000/recommend", content);
+
+            if (!response.IsSuccessStatusCode)
+                return StatusCode((int)response.StatusCode, "Failed to get recommendations.");
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            var rankedIndices = JsonConvert.DeserializeObject<Dictionary<int, int>>(responseBody);
+
+            return Ok(rankedIndices);
+        }
+
     }
 }

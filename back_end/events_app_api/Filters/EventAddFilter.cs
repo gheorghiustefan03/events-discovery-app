@@ -1,4 +1,5 @@
-﻿using events_app_api.Data;
+﻿using events_app_api.Controllers;
+using events_app_api.Data;
 using events_app_api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -153,6 +154,14 @@ namespace events_app_api.Filters
         record ImageOrder(int id, int index);
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
+            var endpoint = context.HttpContext.GetEndpoint();
+            var skip = endpoint?.Metadata?.GetMetadata<SkipEventAddFilterAttribute>() != null;
+
+            if (skip)
+            {
+                await next(); // Bypass filter
+                return;
+            }
             StringBuilder errorMessage = new StringBuilder();
             var request = context.HttpContext.Request;
             request.EnableBuffering();

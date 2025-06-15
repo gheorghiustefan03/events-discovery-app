@@ -1,11 +1,12 @@
 package eu.ase.acs.eventsappui;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
+import android.provider.Settings;
 import android.view.MenuItem;
 import android.widget.Toast;
 
@@ -19,7 +20,6 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -28,15 +28,12 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
-import org.threeten.bp.LocalDateTime;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import eu.ase.acs.eventsappui.api.ApiService;
@@ -45,9 +42,6 @@ import eu.ase.acs.eventsappui.api.ApiViewModelFactory;
 import eu.ase.acs.eventsappui.entities.Category;
 import eu.ase.acs.eventsappui.entities.Event;
 import eu.ase.acs.eventsappui.entities.Location;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -78,8 +72,8 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
             Toast.makeText(this, R.string.location_permission_warning, Toast.LENGTH_SHORT).show();
         } else {
             run();
@@ -88,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void run() {
         FusedLocationProviderClient clientLocation = LocationServices.getFusedLocationProviderClient(this);
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             return;
         }
         Task<android.location.Location> locationResult = clientLocation.getLastLocation();
@@ -126,6 +120,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onDataFetched(){
+        System.out.println(recommendedIndices);
+
         Fragment homeFragment = new HomeFragment();
         Fragment searchFragment = new SearchFragment();
         Fragment mapFragment = new MapFragment();
@@ -177,6 +173,7 @@ public class MainActivity extends AppCompatActivity {
         MutableLiveData<Boolean> categoriesFetched = new MutableLiveData<>(false);
         MutableLiveData<Boolean> locationsFetched = new MutableLiveData<>(false);
         MutableLiveData<Boolean> eventsFetched = new MutableLiveData<>(false);
+        MutableLiveData<Boolean> indicesFetched = new MutableLiveData<>(false);
 
         apiViewModel.getCategoriesLiveData().observe(this, categories -> {
             if (categories != null) {
@@ -199,8 +196,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        apiViewModel.getIndicesLiveData().observe(this, indices -> {
+            if (indices != null) {
+                recommendedIndices = indices;
+                indicesFetched.setValue(true);
+            }
+        });
+
         // Fetch categories and locations in parallel
-        apiViewModel.fetchCategories();
+        String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        AtomicReference<List<Integer>> eventIds = new AtomicReference<>(new ArrayList<>());
+
+
         apiViewModel.fetchLocations(userLocation.latitude, userLocation.longitude, radius);
 
         // Observe locationsFetched to fetch events after locations are fetched
@@ -211,14 +218,30 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        eventsFetched.observe(this, fetched -> {
+            if (fetched) {
+                // Fetch indices after events are fetched
+                eventIds.set(allEvents.stream().map(Event::getId).collect(Collectors.toList()));
+                apiViewModel.fetchIndices(deviceId, eventIds.get());
+            }
+        });
+
+        indicesFetched.observe(this, fetched -> {
+            if (fetched) {
+                apiViewModel.fetchCategories(deviceId, eventIds.get());
+            }
+        });
+
         // Observe all fetch statuses to continue the flow after all data is fetched
         MediatorLiveData<Boolean> allDataFetched = new MediatorLiveData<>();
         allDataFetched.addSource(categoriesFetched, value -> allDataFetched.setValue(
-                categoriesFetched.getValue() && locationsFetched.getValue() && eventsFetched.getValue()));
+                categoriesFetched.getValue() && locationsFetched.getValue() && eventsFetched.getValue() && indicesFetched.getValue()));
         allDataFetched.addSource(locationsFetched, value -> allDataFetched.setValue(
-                categoriesFetched.getValue() && locationsFetched.getValue() && eventsFetched.getValue()));
+                categoriesFetched.getValue() && locationsFetched.getValue() && eventsFetched.getValue() && indicesFetched.getValue()));
         allDataFetched.addSource(eventsFetched, value -> allDataFetched.setValue(
-                categoriesFetched.getValue() && locationsFetched.getValue() && eventsFetched.getValue()));
+                categoriesFetched.getValue() && locationsFetched.getValue() && eventsFetched.getValue() && indicesFetched.getValue()));
+        allDataFetched.addSource(indicesFetched, value -> allDataFetched.setValue(
+                categoriesFetched.getValue() && locationsFetched.getValue() && eventsFetched.getValue() && indicesFetched.getValue()));
 
         allDataFetched.observe(this, allFetched -> {
             if (allFetched) {
@@ -274,23 +297,6 @@ public class MainActivity extends AppCompatActivity {
         return result;
     }
 
-    private double[] generateRandomCoordinate(double centerLat, double centerLong, double radiusInKm) {
-        Random rand = new Random();
-        final int EARTH_RADIUS = 6371;
-        // Random distance and angle
-        double angle = 2 * Math.PI * rand.nextDouble(); // Random angle
-        double distance = radiusInKm * Math.sqrt(rand.nextDouble()); // Random distance within the radius
-
-        // Convert to latitude and longitude differences
-        double deltaLat = (distance / EARTH_RADIUS) * (180 / Math.PI); // Latitude difference
-        double deltaLong = (distance / EARTH_RADIUS) * (180 / Math.PI) / Math.cos(Math.toRadians(centerLat)); // Longitude difference
-
-        // Randomize direction within the circle (angle determines direction)
-        double randomLat = centerLat + deltaLat * Math.sin(angle);
-        double randomLong = centerLong + deltaLong * Math.cos(angle);
-
-        return new double[]{randomLat, randomLong};
-    }
 
     void getSavedEvents() {
         savedEvents.clear();

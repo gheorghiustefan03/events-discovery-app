@@ -31,7 +31,7 @@ public class SliderAdapter extends SliderViewAdapter<SliderAdapter.SliderAdapter
         final String sliderItem = mSliderItems.get(position);
 
         Glide.with(viewHolder.itemView)
-                .load(sliderItem.replace('\\', '/').replace("https://localhost:7295", "http://10.0.2.2:5073"))
+                .load(sliderItem.replace('\\', '/').replace("http://localhost:5073", "http://10.0.2.2:5073"))
                 .fitCenter()
                 .into(viewHolder.imageViewBackground);
     }
