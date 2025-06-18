@@ -14,6 +14,7 @@ namespace events_app_api.Middleware
 
         public async Task InvokeAsync(HttpContext context)
         {
+            
             string authHeader = context.Request.Headers["Authorization"];
 
             if (!string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
@@ -44,6 +45,7 @@ namespace events_app_api.Middleware
                     return;
                 }
             }
+            
 
             await _next(context);
         }

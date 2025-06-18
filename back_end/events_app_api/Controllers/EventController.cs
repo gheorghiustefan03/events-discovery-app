@@ -78,7 +78,7 @@ namespace events_app_api.Controllers
                 {
                     string existingFileExtension = Path.GetExtension(Path.GetFileName(@event.ImageUrls.First(iu => Path.GetFileName(iu).Contains(i.ToString()))));
                     imageUrls.Add(Path.Join("http://localhost:5073", "images", @event.Id.ToString(), i.ToString()) + existingFileExtension
-    + $"?v={DateTime.UtcNow.Ticks}");
+                     + $"?v={DateTime.UtcNow.Ticks}");
                     skipped += 1;
                     continue;
                 }
@@ -109,6 +109,8 @@ namespace events_app_api.Controllers
             try
             {
                 await _context.Events.AddAsync(@event);
+
+                await _context.SaveChangesAsync();
 
                 await syncImages(@event, files);
 
