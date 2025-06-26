@@ -75,7 +75,7 @@ public class EventActivity extends AppCompatActivity {
         tvName.setText(event.getName());
         tvDescription.setText(event.getDescription());
         tvLocation.setText(Html.fromHtml(
-                "<a href=\"" + "https://www.google.com/maps/search/?api=1&query=" + event.getLocation().getLatitude() + "," + event.getLocation().getLongitude() + "&zoom=13" + "\">" + "\uD83D\uDCCC" + event.getLocation().getName() + "</a>"
+                "<a href=\"" + "https://www.google.com/maps/search/?api=1&query=" + event.getLocation().getLatitude() + "," + event.getLocation().getLongitude() + "&zoom=13" + "\">" + event.getLocation().getName() + "</a>"
                 , Html.FROM_HTML_MODE_COMPACT));
         tvLocation.setMovementMethod(LinkMovementMethod.getInstance());
         tvLink.setText(Html.fromHtml(

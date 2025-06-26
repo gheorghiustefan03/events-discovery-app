@@ -1,5 +1,6 @@
 package eu.ase.acs.eventsappui;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -64,6 +65,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         mapFragment.getMapAsync(this);
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         gMap = googleMap;
@@ -87,8 +89,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         }
         gMap.moveCamera(CameraUpdateFactory.newCameraPosition(position));
         gMap.addCircle(new CircleOptions().center(mainActivity.userLocation).strokeColor(R.color.black).strokeWidth(4).radius(mainActivity.radius));
-        Marker userLocationMarker = gMap.addMarker(new MarkerOptions().position(mainActivity.userLocation).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-        userLocationMarker.setTag(null);
+        gMap.setMyLocationEnabled(true);
     }
 
     private void showEventDialog(Marker marker) {

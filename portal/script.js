@@ -2,6 +2,14 @@ let map;
 let marker;
 let images = []; // common: {type}, new {file}, existing {url, active}
 let token = '';
+let sortAscending = true;
+
+function toggleSort() {
+    sortAscending = !sortAscending;
+    document.getElementById("sortButton").textContent = `Sort by Start Date ${sortAscending ? '↑' : '↓'}`;
+    loadData(sortAscending);
+}
+
 
 document.addEventListener("DOMContentLoaded", () => {
     const fileInput = document.getElementById("fileInput");
@@ -123,7 +131,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-async function loadData() {
+async function loadData(sortAsc = true) {
     const locRes = await fetch('http://localhost:5073/api/Location?userLat=0&userLon=0&radius=20000000', {
         headers: { Authorization: `Bearer ${token}` }
     });
@@ -131,11 +139,12 @@ async function loadData() {
     const locList = document.getElementById("locationList");
     const locSelect = document.getElementById("eventLocation");
     locList.innerHTML = locSelect.innerHTML = '';
+    
     locs.forEach(loc => {
         locList.innerHTML += `<li class="list-group-item">${loc.name}
-      <button onclick="editLocation(${loc.id})" class="btn btn-sm btn-warning float-end ms-2">Edit</button>
-      <button onclick="deleteLocation(${loc.id})" class="btn btn-sm btn-danger float-end">Delete</button>
-    </li>`;
+            <button onclick="editLocation(${loc.id})" class="btn btn-sm btn-warning float-end ms-2">Edit</button>
+            <button onclick="deleteLocation(${loc.id})" class="btn btn-sm btn-danger float-end">Delete</button>
+        </li>`;
         locSelect.innerHTML += `<option value="${loc.id}">${loc.name}</option>`;
     });
 
@@ -145,22 +154,46 @@ async function loadData() {
         eventReqParams += "lId=" + locId + "&";
     }
     if (eventReqParams.endsWith("&")) {
-        eventReqParams = eventReqParams.substring(0, eventReqParams.length - 1);
+        eventReqParams = eventReqParams.slice(0, -1);
     }
-    const eventReq = 'http://localhost:5073/api/Event' + ((eventReqParams.length !== 1) ? eventReqParams : "");
+
+    const eventReq = 'http://localhost:5073/api/Event' + (eventReqParams.length > 1 ? eventReqParams : "");
     const eventRes = await fetch(eventReq, {
         headers: { Authorization: `Bearer ${token}` }
     });
     const events = await eventRes.json();
+
+    events.sort((a, b) => {
+        const dateA = new Date(a.startDate);
+        const dateB = new Date(b.startDate);
+        return sortAsc ? dateA - dateB : dateB - dateA;
+    });
+
     const eventList = document.getElementById("eventList");
     eventList.innerHTML = '';
     events.forEach(ev => {
-        eventList.innerHTML += `<li class="list-group-item">${ev.name}
-      <button onclick="editEvent(${ev.id})" class="btn btn-sm btn-warning float-end ms-2">Edit</button>
-      <button onclick="deleteEvent(${ev.id})" class="btn btn-sm btn-danger float-end">Delete</button>
-    </li>`;
+        const eventDate = new Date(ev.startDate);
+        const startDateStr = eventDate.toLocaleString();
+        const isPast = eventDate < new Date();
+
+        // Add 'text-muted' and reduce opacity if event is in the past
+        const listItemClass = isPast ? 'list-group-item text-muted' : 'list-group-item';
+
+        eventList.innerHTML += `<li class="${listItemClass} d-flex justify-content-between align-items-center" style="${isPast ? 'opacity: 0.6;' : ''}">
+            <div>
+                <strong>${ev.name}</strong><br>
+                <small class="text-muted">Starts: ${startDateStr}</small>
+            </div>
+            <div>
+                <button onclick="editEvent(${ev.id})" class="btn btn-sm btn-warning me-2">Edit</button>
+                <button onclick="deleteEvent(${ev.id})" class="btn btn-sm btn-danger">Delete</button>
+            </div>
+        </li>`;
     });
+
 }
+
+
 
 function getFileNameWithoutExtension(urlOrPath) {
     const cleanUrl = urlOrPath.replace(/\\/g, '/').split(/[?#]/)[0];
