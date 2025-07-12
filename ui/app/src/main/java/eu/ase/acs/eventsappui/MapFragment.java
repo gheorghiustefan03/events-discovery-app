@@ -8,6 +8,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,6 +47,30 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     public MapFragment() {
     }
 
+    @SuppressLint("MissingPermission")
+    private void tryLoad(){
+
+            for (Location location : mainActivity.allLocations) {
+                gMap.addMarker(new MarkerOptions().position(
+                        new LatLng(location.getLatitude(), location.getLongitude())
+                ).title(location.getName())).setTag(location);
+            }
+            gMap.setOnMarkerClickListener(marker -> {
+                if (marker.getTag() != null) {
+                    showEventDialog(marker);
+                    return false;
+                }
+                return true;
+            });
+            if (position == null) {
+                position = CameraPosition.fromLatLngZoom(mainActivity.userLocation, 15);
+            }
+            gMap.moveCamera(CameraUpdateFactory.newCameraPosition(position));
+            gMap.addCircle(new CircleOptions().center(mainActivity.userLocation).strokeColor(R.color.black).strokeWidth(4).radius(mainActivity.radius));
+            gMap.setMyLocationEnabled(true);
+
+    }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -55,6 +80,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         return inflater.inflate(R.layout.fragment_map, container, false);
     }
 
@@ -63,6 +89,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         super.onViewCreated(view, savedInstanceState);
         SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        mainActivity = (MainActivity) requireActivity();
     }
 
     @SuppressLint("MissingPermission")
@@ -71,25 +98,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
         gMap = googleMap;
         gMap.clear();
         gMap.setInfoWindowAdapter(new MapPinDropdownAdapter(requireContext()));
-        mainActivity = (MainActivity) requireActivity();
-        for (Location location : mainActivity.allLocations) {
-            gMap.addMarker(new MarkerOptions().position(
-                    new LatLng(location.getLatitude(), location.getLongitude())
-            ).title(location.getName())).setTag(location);
-        }
-        gMap.setOnMarkerClickListener(marker -> {
-            if (marker.getTag() != null) {
-                showEventDialog(marker);
-                return false;
-            }
-            return true;
-        });
-        if (position == null) {
-            position = CameraPosition.fromLatLngZoom(mainActivity.userLocation, 15);
-        }
-        gMap.moveCamera(CameraUpdateFactory.newCameraPosition(position));
-        gMap.addCircle(new CircleOptions().center(mainActivity.userLocation).strokeColor(R.color.black).strokeWidth(4).radius(mainActivity.radius));
-        gMap.setMyLocationEnabled(true);
+        tryLoad();
     }
 
     private void showEventDialog(Marker marker) {
@@ -135,6 +144,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     @Override
     public void onStop() {
         super.onStop();
-        position = gMap.getCameraPosition();
+        if(gMap != null)
+            position = gMap.getCameraPosition();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (gMap != null) {
+            gMap.clear(); // Clear all markers, overlays, etc.
+            gMap.setOnMarkerClickListener(null); // Remove listeners
+            gMap.setInfoWindowAdapter(null); // Remove adapters
+            gMap = null; // Release the GoogleMap reference
+        }
     }
 }

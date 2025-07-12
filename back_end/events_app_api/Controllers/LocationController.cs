@@ -98,7 +98,8 @@ namespace events_app_api.Controllers
         public async Task<IActionResult> getLocations([FromQuery] double userLat, [FromQuery] double userLon, [FromQuery] long radius)
         {
             List<Location> locations = await _context.Locations.ToListAsync();
-            return Ok(locations.Where(l => l.isInCircle(userLat, userLon, radius)));
+            var locationsResponse = Ok(locations.Where(l => l.isInCircle(userLat, userLon, radius)));
+            return locationsResponse;
         }
     }
 }

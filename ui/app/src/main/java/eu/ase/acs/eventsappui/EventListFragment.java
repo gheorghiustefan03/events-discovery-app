@@ -69,8 +69,8 @@ public class EventListFragment extends Fragment {
 
         initComponents(view);
         fabRecommended.setOnClickListener(view1 -> {
-            HomeFragment fragment = new HomeFragment();
-            mainActivity.setCurrentFragment(fragment, true);
+                    HomeFragment fragment = new HomeFragment();
+                    mainActivity.setCurrentFragment(fragment, true);
         });
         fabViewSaved.setOnClickListener((v) -> {
             if (viewSaved) {

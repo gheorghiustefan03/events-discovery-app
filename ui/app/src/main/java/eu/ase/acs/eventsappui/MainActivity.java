@@ -6,10 +6,14 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
+import android.widget.ViewFlipper;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,6 +23,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
@@ -48,7 +53,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
     private static final String LOREM_IPSUM = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque sit amet maximus purus, id sodales lorem. Sed velit ipsum, viverra vitae convallis fringilla, accumsan ac leo. Nulla aliquam at nulla sit amet ultricies. In et libero fringilla, gravida mi vel, tempus mauris. Vivamus ultrices, leo quis eleifend placerat, libero turpis mattis orci, vel auctor quam lacus id dui. Donec non ligula enim. Aliquam eget felis purus. Curabitur eget ex nisl. ";
-    private BottomNavigationView nvMain;
+    public BottomNavigationView nvMain;
     public List<Event> allEvents = new ArrayList<>();
     public List<Event> savedEvents = new ArrayList<>();
     public List<Location> allLocations = new ArrayList<>();
@@ -61,6 +66,18 @@ public class MainActivity extends AppCompatActivity {
     public String allEventsSorting = "Recommended";
     private ApiService apiService;
     private ApiViewModel apiViewModel;
+    private MediatorLiveData<Boolean> allDataFetched = new MediatorLiveData<>();
+    private ViewFlipper viewFlipper;
+
+    public LiveData<Boolean> getAllDataLoaded() {
+        return allDataFetched;
+    }
+
+    public void resetAllDataLoaded() {
+        allDataFetched.setValue(false);
+    }
+
+
 
 
     @Override
@@ -113,42 +130,73 @@ public class MainActivity extends AppCompatActivity {
                     ApiViewModelFactory factory = new ApiViewModelFactory(apiService, this);
                     apiViewModel = new ViewModelProvider(this, factory).get(ApiViewModel.class);
 
-                    scanForEvents();
+                    scanForEvents(R.id.home);
                 }
             });
-
-
-
     }
 
-    private void onDataFetched(){
+    private void onDataFetched(int selectedItemId) {
         System.out.println(recommendedIndices);
 
         Fragment homeFragment = new HomeFragment();
         Fragment searchFragment = new SearchFragment();
         Fragment mapFragment = new MapFragment();
         Fragment settingsFragment = new SettingsFragment();
-        setCurrentFragment(homeFragment, true);
+        if(selectedItemId == R.id.home)
+            setCurrentFragment(homeFragment, false);
+        else if(selectedItemId == R.id.search)
+            setCurrentFragment(searchFragment, false);
+        else if(selectedItemId == R.id.map)
+            setCurrentFragment(homeFragment, false);
+        else if(selectedItemId == R.id.settings)
+            setCurrentFragment(settingsFragment, false);
 
         resetBackgrounds(nvMain);
         setItemBackground(nvMain, nvMain.getSelectedItemId(), R.drawable.nav_item_selected_background);
         nvMain.setOnItemSelectedListener(item -> {
+            boolean inSettings = sharedPreferences.getBoolean("isInSettings", false);
+            if(inSettings){
+                scanForEvents(item.getItemId());
+                return true;
+            }
             resetBackgrounds(nvMain);
-            setItemBackground(nvMain, item.getItemId(), R.drawable.nav_item_selected_background);
-            int itemId = item.getItemId();
-            if (itemId == R.id.home)
-                getSupportFragmentManager().popBackStack();
-            else if (itemId == R.id.search)
-                setCurrentFragment(searchFragment, false);
-            else if (itemId == R.id.map)
-                setCurrentFragment(mapFragment, false);
-            else if (itemId == R.id.settings)
-                setCurrentFragment(settingsFragment, false);
+                setItemBackground(nvMain, item.getItemId(), R.drawable.nav_item_selected_background);
+
+                    int itemId = item.getItemId();
+                    if (itemId == R.id.home){
+                        allDataFetched.observe(this, allFetched -> {
+                            if (allFetched) {
+                                setCurrentFragment(homeFragment, false);
+                            }
+                        });
+                    }
+                    else if (itemId == R.id.search){
+                        allDataFetched.observe(this, allFetched -> {
+                            if (allFetched) {
+                                setCurrentFragment(searchFragment, false);
+                            }
+                        });
+                    }
+                    else if (itemId == R.id.map) {
+                        allDataFetched.observe(this, allFetched -> {
+                            if (allFetched) {
+                                setCurrentFragment(mapFragment, false);
+                            }
+                        });
+                    }
+                    else if (itemId == R.id.settings) {
+                        allDataFetched.observe(this, allFetched -> {
+                            if (allFetched) {
+                                setCurrentFragment(settingsFragment, false);
+                            }
+                        });
+                    }
             return true;
         });
     }
 
     private void initComponents() {
+        viewFlipper = findViewById(R.id.view_flipper);
         nvMain = findViewById(R.id.nv_main);
     }
 
@@ -160,16 +208,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showLoadingScreen() {
-        setContentView(R.layout.loading_screen);
+        viewFlipper.setDisplayedChild(0);
+        nvMain.setVisibility(View.GONE);
     }
 
     private void hideLoadingScreen() {
-        setContentView(R.layout.activity_main);
-        initComponents();
+        viewFlipper.setDisplayedChild(1);
+        nvMain.setVisibility(View.VISIBLE);
+        //initComponents();
     }
 
 
-    public void scanForEvents() {
+    public void scanForEvents(int selectedItemId) {
+        apiViewModel.resetLiveData();
+
         showLoadingScreen();
 
         MutableLiveData<Boolean> categoriesFetched = new MutableLiveData<>(false);
@@ -235,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // Observe all fetch statuses to continue the flow after all data is fetched
-        MediatorLiveData<Boolean> allDataFetched = new MediatorLiveData<>();
+        allDataFetched = new MediatorLiveData<>();
         allDataFetched.addSource(categoriesFetched, value -> allDataFetched.setValue(
                 categoriesFetched.getValue() && locationsFetched.getValue() && eventsFetched.getValue() && indicesFetched.getValue()));
         allDataFetched.addSource(locationsFetched, value -> allDataFetched.setValue(
@@ -247,9 +299,9 @@ public class MainActivity extends AppCompatActivity {
 
         allDataFetched.observe(this, allFetched -> {
             if (allFetched) {
-                hideLoadingScreen();
+                onDataFetched(selectedItemId);
                 getSavedEvents();
-                onDataFetched();
+                hideLoadingScreen();
             }
         });
     }

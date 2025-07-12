@@ -1,10 +1,14 @@
 package eu.ase.acs.eventsappui;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,7 +36,7 @@ public class SettingsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_settings, container, false);
         initComponents(view);
         mainActivity = (MainActivity) (requireActivity());
-        SharedPreferences sharedPreferences = requireContext().getSharedPreferences("preferences", Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = requireContext().getSharedPreferences("preferences", MODE_PRIVATE);
         mainActivity.radius = sharedPreferences.getLong("radius", 0);
         sbRadius.setProgress((int) (mainActivity.radius / 1000));
         tvSliderValue.setText(Long.toString(mainActivity.radius / 1000));
@@ -62,9 +66,17 @@ public class SettingsFragment extends Fragment {
         tvSliderValue = view.findViewById(R.id.tv_slider_value);
     }
 
+    @Override public void onStart() {
+        super.onStart();
+        SharedPreferences prefs = mainActivity.getSharedPreferences("preferences", MODE_PRIVATE);
+        prefs.edit().putBoolean("isInSettings", true).apply();
+        mainActivity.resetAllDataLoaded();
+    }
+
     @Override
     public void onStop() {
         super.onStop();
-        mainActivity.scanForEvents();
+        SharedPreferences prefs = mainActivity.getSharedPreferences("preferences", MODE_PRIVATE);
+        prefs.edit().putBoolean("isInSettings", false).apply();
     }
 }

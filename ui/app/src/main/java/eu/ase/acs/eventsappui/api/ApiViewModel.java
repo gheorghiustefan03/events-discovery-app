@@ -81,13 +81,20 @@ public class ApiViewModel extends ViewModel {
     public MutableLiveData<Map<Integer, Integer>> getIndicesLiveData() {
         return indicesLiveData;
     }
+    public void resetLiveData(){
+        categoriesLiveData.setValue(null);
+        eventsLiveData.setValue(null);
+        locationsLiveData.setValue(null);
+        indicesLiveData.setValue(null);
+        combinedLiveData.setValue(null);
+    }
     public MutableLiveData<DataBundle> getCombinedLiveData() {
         return combinedLiveData;
     }
     public void combineData(){
         if(categoriesLiveData.getValue() != null && eventsLiveData.getValue() != null && locationsLiveData.getValue() != null && indicesLiveData != null) {
             DataBundle dataBundle = new DataBundle(categoriesLiveData.getValue(), eventsLiveData.getValue(), locationsLiveData.getValue(), indicesLiveData.getValue());
-            combinedLiveData.postValue(dataBundle);
+            combinedLiveData.setValue(dataBundle);
         }
     }
     public void sendEventInteraction(String deviceId, int eventId, String interactionType, LocalDateTime timestamp) {
@@ -119,8 +126,8 @@ public class ApiViewModel extends ViewModel {
             @Override
             public void onResponse(Call<List<Integer>> call, Response<List<Integer>> response) {
                 if(response.isSuccessful() && response.body() != null) {
-                    categoriesLiveData.postValue(response.body().stream().map(Category::fromInt).collect(Collectors.toList()));
-                    //Log.e("CATEGORIES", categoriesLiveData.getValue().toString());
+                    categoriesLiveData.setValue(response.body().stream().map(Category::fromInt).collect(Collectors.toList()));
+                    Log.e("CATEGORIES", categoriesLiveData.getValue().toString());
                 }
                 else {
                     Log.e("SERVER ERROR", "Failed to fetch categories");
@@ -178,7 +185,8 @@ public class ApiViewModel extends ViewModel {
                             events.add(event);
                             ((MainActivity)activity).recommendedIndices.put(event.getId(), i);
                         }
-                        eventsLiveData.postValue(events);
+                        eventsLiveData.setValue(events);
+                        Log.e("EVENTS", eventsLiveData.getValue().toString());
                     } catch (IOException | JSONException e) {
                         Log.e("PARSING ERROR", "Failed to parse events", e);
                     }
@@ -198,8 +206,8 @@ public class ApiViewModel extends ViewModel {
             @Override
             public void onResponse(Call<List<Location>> call, Response<List<Location>> response) {
                 if(response.isSuccessful() && response.body() != null) {
-                    locationsLiveData.postValue(response.body());
-                    //Log.e("LOCATIONS", locationsLiveData.getValue().toString());
+                    locationsLiveData.setValue(response.body());
+                    Log.e("LOCATIONS", locationsLiveData.getValue().toString());
                 }
                 else {
                     Log.e("SERVER ERROR", "Failed to fetch locations");
@@ -221,8 +229,8 @@ public class ApiViewModel extends ViewModel {
             @Override
             public void onResponse(Call<Map<Integer, Integer>> call, Response<Map<Integer, Integer>> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    indicesLiveData.postValue(response.body());
-                    Log.d("API", "Indices fetched successfully: " + response.body());
+                    indicesLiveData.setValue(response.body());
+                    Log.e("INDICES", indicesLiveData.getValue().toString());
                 } else {
                     Log.e("API", "Failed to fetch indices: " + response.message());
                 }
