@@ -14,7 +14,6 @@ var connectionString = builder.Configuration.GetConnectionString("LocalConnectio
 builder.Services.AddDbContext<ApiContext>(options =>
     options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 30))));
 
-// Add services to the container.
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
@@ -43,7 +42,6 @@ builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

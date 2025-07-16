@@ -176,7 +176,6 @@ async function loadData(sortAsc = true) {
         const startDateStr = eventDate.toLocaleString();
         const isPast = eventDate < new Date();
 
-        // Add 'text-muted' and reduce opacity if event is in the past
         const listItemClass = isPast ? 'list-group-item text-muted' : 'list-group-item';
 
         eventList.innerHTML += `<li class="${listItemClass} d-flex justify-content-between align-items-center" style="${isPast ? 'opacity: 0.6;' : ''}">

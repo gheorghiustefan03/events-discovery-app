@@ -152,10 +152,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback {
     public void onDestroyView() {
         super.onDestroyView();
         if (gMap != null) {
-            gMap.clear(); // Clear all markers, overlays, etc.
-            gMap.setOnMarkerClickListener(null); // Remove listeners
-            gMap.setInfoWindowAdapter(null); // Remove adapters
-            gMap = null; // Release the GoogleMap reference
+            gMap.clear();
+            gMap.setOnMarkerClickListener(null);
+            gMap.setInfoWindowAdapter(null);
+            gMap = null;
         }
     }
 }

@@ -257,14 +257,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Fetch categories and locations in parallel
         String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
         AtomicReference<List<Integer>> eventIds = new AtomicReference<>(new ArrayList<>());
 
-
         apiViewModel.fetchLocations(userLocation.latitude, userLocation.longitude, radius);
 
-        // Observe locationsFetched to fetch events after locations are fetched
         locationsFetched.observe(this, fetched -> {
             if (fetched) {
                 List<Integer> locationIds = allLocations.stream().map(Location::getId).collect(Collectors.toList());
@@ -274,7 +271,6 @@ public class MainActivity extends AppCompatActivity {
 
         eventsFetched.observe(this, fetched -> {
             if (fetched) {
-                // Fetch indices after events are fetched
                 eventIds.set(allEvents.stream().map(Event::getId).collect(Collectors.toList()));
                 apiViewModel.fetchIndices(deviceId, eventIds.get());
             }
@@ -286,7 +282,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Observe all fetch statuses to continue the flow after all data is fetched
         allDataFetched = new MediatorLiveData<>();
         allDataFetched.addSource(categoriesFetched, value -> allDataFetched.setValue(
                 categoriesFetched.getValue() && locationsFetched.getValue() && eventsFetched.getValue() && indicesFetched.getValue()));
@@ -333,11 +328,9 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == 1) {
-            // If permission is granted
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 run();
             } else {
-                // Permission denied, show a message or handle the case
                 System.exit(0);
             }
         }

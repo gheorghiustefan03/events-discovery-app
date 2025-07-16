@@ -7,7 +7,6 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <!-- ViewFlipper containing Loading View and Main App UI -->
     <ViewFlipper
         android:id="@+id/view_flipper"
         android:layout_width="match_parent"
@@ -18,7 +17,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- Loading Screen -->
+
         <FrameLayout
             android:id="@+id/loading_view"
             android:layout_width="match_parent"
@@ -26,7 +25,6 @@
             android:background="@android:color/white"
             android:gravity="center">
 
-            <!-- Put your loading UI here -->
             <ProgressBar
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -34,14 +32,13 @@
 
         </FrameLayout>
 
-        <!-- Main App Content -->
+
         <FrameLayout
             android:id="@+id/fl_main"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
     </ViewFlipper>
 
-    <!-- Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/nv_main"
         android:layout_width="match_parent"
