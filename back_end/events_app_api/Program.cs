@@ -1,12 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-using events_app_api.Models;
 using events_app_api.Data;
 using events_app_api.Filters;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using events_app_api.Middleware;
+using Microsoft.AspNetCore.Authentication;
+using events_app_api.Authentication;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,11 +32,34 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
 });
 builder.Services.AddHttpClient();
+builder.Services.AddAuthentication("GoogleAuth")
+    .AddScheme<AuthenticationSchemeOptions, GoogleAdminAuthenticationHandler>("GoogleAuth", options => { });
+builder.Services.AddAuthorization();
 
 
 
 
 var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler(errorApp =>
+    {
+        errorApp.Run(async context =>
+        {
+            context.Response.StatusCode =
+                StatusCodes.Status500InternalServerError;
+
+            context.Response.ContentType = "application/json";
+
+            await context.Response.WriteAsJsonAsync(new
+            {
+                error = "Internal Server Error",
+                message = "An unexpected error occurred."
+            });
+        });
+    });
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -51,8 +70,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("AllowFrontend");
-
-app.UseMiddleware<GoogleAuthMiddleware>();
 
 app.UseAuthentication();
 

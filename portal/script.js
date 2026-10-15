@@ -13,7 +13,16 @@ function toggleSort() {
 
 document.addEventListener("DOMContentLoaded", () => {
     const fileInput = document.getElementById("fileInput");
-    document.getElementById("g_id_onload").setAttribute("data-client_id", CONFIG.GOOGLE_CLIENT_ID);
+
+    google.accounts.id.initialize({
+        client_id: CONFIG.GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse
+    });
+    
+    google.accounts.id.renderButton(
+        document.getElementById("auth"),
+        { theme: "outline", size: "large" }
+    );
 
     map = L.map('map').setView([51.505, -0.09], 13);
 
@@ -125,6 +134,7 @@ window.addEventListener("DOMContentLoaded", () => {
         if (payload.email === CONFIG.ALLOWED_EMAIL) {
             token = savedToken;
             document.getElementById("auth").classList.add("hidden");
+            document.getElementById("login-text").classList.add("hidden");
             document.getElementById("app").classList.remove("hidden");
             loadData();
         }

@@ -18,12 +18,8 @@
 
 <body class="p-4">
   <div class="container position-relative mt-4">
-    <div id="auth" class="text-center">
-      <h2>Login</h2>
-      <div id="g_id_onload" data-callback="handleCredentialResponse" data-auto_prompt="false">
-      </div>
-      <div class="g_id_signin" data-type="standard"></div>
-    </div>
+    <h2 id="login-text" class="text-center">Login</h2>
+    <div id="auth" class="text-center"></div>
 
     <div id="app" class="hidden">
       <button onclick="logout()" class="btn btn-outline-danger position-absolute top-0 end-0">
